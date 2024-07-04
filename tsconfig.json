@@ -104,6 +104,6 @@
     /* Completeness */
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true,                                 /* Skip type checking all .d.ts files. */
-    "include": ["./src/**/*.ts"]                           /* Specify an array of 'glob' patterns that match files to be included in compilation. */
-  }
+  },
+  "include": ["./src/**/*.ts"]                           /* Specify an array of 'glob' patterns that match files to be included in compilation. */
 }
