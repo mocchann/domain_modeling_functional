@@ -1,5 +1,6 @@
-/** 4.1.1 */
-type signature
+/** 4.1.1
+ * type signature
+ * */
 
 let x: number = 1;
 const add1 = (x: number): number => x + 1;
