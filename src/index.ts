@@ -1,6 +1,6 @@
 /** 4.1.1
- * type signature
- * */
+ * Type signature
+ */
 
 let x: number = 1;
 const add1 = (x: number): number => x + 1;
@@ -15,4 +15,6 @@ let squarePlusOne = (x: number): number => {
   return square + 1;
 };
 
-/** 4.1.2 */
+/** 4.1.2
+ * Generic type function
+ */
