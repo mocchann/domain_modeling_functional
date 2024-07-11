@@ -18,3 +18,6 @@ let squarePlusOne = (x: number): number => {
 /** 4.1.2
  * Generic type function
  */
+
+// areEqual : 'a -> 'a -> bool
+let areEqual = <A>(x: A, y: A): boolean => x === y;
