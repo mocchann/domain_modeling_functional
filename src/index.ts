@@ -10,7 +10,7 @@ let y: number;
 const add = (x: number, y: number): number => x + y;
 
 // squarePlusOne : int -> int
-let squarePlusOne = (x: number): number => {
+const squarePlusOne = (x: number): number => {
   let square = x * x;
   return square + 1;
 };
@@ -20,4 +20,4 @@ let squarePlusOne = (x: number): number => {
  */
 
 // areEqual : 'a -> 'a -> bool
-let areEqual = <A>(x: A, y: A): boolean => x === y;
+const areEqual = <A>(x: A, y: A): boolean => x === y;
