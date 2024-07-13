@@ -21,3 +21,7 @@ const squarePlusOne = (x: number): number => {
 
 // areEqual : 'a -> 'a -> bool
 const areEqual = <A>(x: A, y: A): boolean => x === y;
+
+/** 4.2
+ * Type and Function
+ */
