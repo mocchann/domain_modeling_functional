@@ -32,4 +32,6 @@ type someOutputType = string | number | boolean;
 const someFunction = (x: int16): someOutputType => y;
 
 // someInputType -> string
+const z: string = "other string";
 type someInputType = string | number | boolean;
+const someFunction2 = (x: someInputType): string => z;
