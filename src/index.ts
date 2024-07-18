@@ -29,9 +29,10 @@ const areEqual = <A>(x: A, y: A): boolean => x === y;
 // int16 -> someOutputType
 type int16 = -32768 | -32767 | -2 | -1 | 0 | 1 | 2 | 32767 | 32768;
 type someOutputType = string | number | boolean;
-const someFunction = (x: int16): someOutputType => y;
+const someFunction = (x: int16[]): someOutputType => y;
 
 // someInputType -> string
 const z: string = "other string";
 type someInputType = string | number | boolean;
-const someFunction2 = (x: someInputType): string => z;
+const someFunction2 = (x: someInputType[]): string => z;
+
