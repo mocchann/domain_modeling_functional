@@ -36,3 +36,10 @@ const z: string = "other string";
 type someInputType = string | number | boolean;
 const someFunction2 = (x: someInputType[]): string => z;
 
+//Person -> someOutputType
+type Person = {
+  name: string;
+  age: number;
+};
+const someFunction3 = (x: Person[]): someOutputType => y;
+
