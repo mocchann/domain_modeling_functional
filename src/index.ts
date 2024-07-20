@@ -43,3 +43,6 @@ type Person = {
 };
 const someFunction3 = (x: Person[]): someOutputType => y;
 
+// someInputType -> Fruit
+type Fruit = "Apple" | "Banana" | "Orange";
+const someFunction4 = (x: someInputType[]): Fruit => "Apple";
