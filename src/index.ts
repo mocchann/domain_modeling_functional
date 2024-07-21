@@ -46,3 +46,9 @@ const someFunction3 = (x: Person[]): someOutputType => y;
 // someInputType -> Fruit
 type Fruit = "Apple" | "Banana" | "Orange";
 const someFunction4 = (x: someInputType[]): Fruit => "Apple";
+
+// someInputType -> Fruit -> Fruit
+type FruitToFruit = (x: Fruit) => Fruit;
+const someFunction5 = (x: someInputType[]): FruitToFruit => {
+  return (x: Fruit): Fruit => x;
+};
