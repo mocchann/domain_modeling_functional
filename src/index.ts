@@ -52,3 +52,86 @@ type FruitToFruit = (x: Fruit) => Fruit;
 const someFunction5 = (x: someInputType[]): FruitToFruit => {
   return (x: Fruit): Fruit => x;
 };
+
+/** 4.3
+ * Type composition
+ */
+
+/** 4.3.1
+ * Type "AND"
+ */
+
+type FruitSalad = {
+  Apple: AppleVariety;
+  Banana: BananaVariety;
+  Cherries: CherryVariety;
+};
+
+/** 4.3.2
+ * Type "OR"
+ */
+
+type FruitSnack = AppleVariety | BananaVariety | CherryVariety;
+
+type AppleVariety = "Fuji" | "Granny Smith" | "Golden Delicious";
+type BananaVariety = "Cavendish" | "GrosMichel" | "Manzano";
+type CherryVariety = "Montmorency" | "Bing";
+
+/** 4.3.3
+ * Simple Type
+ */
+
+type ProductCodes = { productCode: string };
+
+/** 4.3.4
+ * Algebraic type systems
+ */
+
+/** 4.4
+ * Handling F# types
+ */
+
+type PersonType = {
+  First: string;
+  Last: string;
+};
+
+const personValue: PersonType = {
+  First: "Alex",
+  Last: "Adams",
+};
+
+const { First, Last } = personValue;
+const first = personValue.First;
+const last = personValue.Last;
+
+type UnitOrderQuantity = { type: "unitQuantity"; unitQuantity: number };
+type KilogramOrderQuantity = {
+  type: "kilogramQuantity";
+  kilogramQuantity: number;
+};
+
+type OrderQuantity = UnitOrderQuantity | KilogramOrderQuantity;
+
+const anOrderQtyInUnits: OrderQuantity = {
+  type: "unitQuantity",
+  unitQuantity: 5,
+};
+
+const anOrderQtyInKg: OrderQuantity = {
+  type: "kilogramQuantity",
+  kilogramQuantity: 2.5,
+};
+
+const printQuantity = (aOrderQty: OrderQuantity): string => {
+  switch (aOrderQty.type) {
+    case "unitQuantity":
+      return `Order quantity is ${aOrderQty.unitQuantity} units`;
+    case "kilogramQuantity":
+      return `Order quantity is ${aOrderQty.kilogramQuantity} kg`;
+  }
+};
+
+/** 4.5
+ * Domain model construction by type synthesis
+ */
