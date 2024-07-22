@@ -203,3 +203,12 @@ type PaymentError =
   | "CardTypeNotRecognized"
   | "PaymentRejected"
   | "PaymentProviderOffline";
+
+/** 4.6.3
+ * Modeling the absence of a value
+ */
+
+// SaveCustomer = Customer -> unit
+type SaveCustomer = (customer: "Customer") => void;
+// NextRandom = unit -> int
+type NextRandom = () => number;
