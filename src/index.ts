@@ -165,3 +165,25 @@ type ConvertPayentCurrency = (
 ) => {
   payment: Payment;
 };
+
+/** 4.6
+ * Modeling of Optional Values, Errors, and Collections
+ */
+
+/** 4.6.1
+ * Modeling of Optional Values
+ */
+
+type Option<A> = { type: "some"; some: A } | undefined;
+
+type PersonalName = {
+  firstName: string;
+  middleInitial: Option<string>;
+  lastName: string;
+};
+
+type PersonalName2 = {
+  firstName: string;
+  middleInitial: string | undefined;
+  lastName: string;
+};
