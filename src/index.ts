@@ -187,3 +187,19 @@ type PersonalName2 = {
   middleInitial: string | undefined;
   lastName: string;
 };
+
+/** 4.6.2
+ * Modeling of Errors
+ */
+
+type Result<S, F> = { type: "success"; ok: S } | { type: "failure"; error: F };
+
+type PayInvoice2 = (
+  unpaidInvoice: any,
+  payment: Payment
+) => Result<"paidInvoice", PaymentError>;
+
+type PaymentError =
+  | "CardTypeNotRecognized"
+  | "PaymentRejected"
+  | "PaymentProviderOffline";
