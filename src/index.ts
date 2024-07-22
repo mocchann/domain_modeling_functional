@@ -135,3 +135,33 @@ const printQuantity = (aOrderQty: OrderQuantity): string => {
 /** 4.5
  * Domain model construction by type synthesis
  */
+
+type CheckNumber = { type: "checkNumber"; checkNumber: number };
+type CardNumber = { type: "cardNumber"; cardNumber: number };
+type CardType = "Visa" | "MasterCard";
+type CreditCardInfo = {
+  cardType: CardType;
+  cardNumber: CardNumber;
+};
+
+type PaymentMethod =
+  | "cash"
+  | { type: "check"; check: CheckNumber }
+  | { type: "card"; card: CreditCardInfo };
+type PaymentAmount = { type: "paymentAmount"; paymentAmount: number };
+type Currency = "USD" | "EUR";
+
+type Payment = {
+  amount: PaymentAmount;
+  currency: Currency;
+  method: PaymentMethod;
+};
+
+// UnpaidInvoice -> Payment -> PaidInvoice
+type PayInvoice = (unpaidInvoice: any, payment: Payment) => "paidInvoice";
+type ConvertPayentCurrency = (
+  payment: Payment,
+  currency: Currency
+) => {
+  payment: Payment;
+};
