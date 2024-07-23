@@ -105,25 +105,25 @@ const { First, Last } = personValue;
 const first = personValue.First;
 const last = personValue.Last;
 
-type UnitOrderQuantity = { type: "unitQuantity"; unitQuantity: number };
-type KilogramOrderQuantity = {
+type UnitOrderQuantity1 = { type: "unitQuantity"; unitQuantity: number };
+type KilogramOrderQuantity1 = {
   type: "kilogramQuantity";
   kilogramQuantity: number;
 };
 
-type OrderQuantity = UnitOrderQuantity | KilogramOrderQuantity;
+type OrderQuantity1 = UnitOrderQuantity1 | KilogramOrderQuantity1;
 
-const anOrderQtyInUnits: OrderQuantity = {
+const anOrderQtyInUnits: OrderQuantity1 = {
   type: "unitQuantity",
   unitQuantity: 5,
 };
 
-const anOrderQtyInKg: OrderQuantity = {
+const anOrderQtyInKg: OrderQuantity1 = {
   type: "kilogramQuantity",
   kilogramQuantity: 2.5,
 };
 
-const printQuantity = (aOrderQty: OrderQuantity): string => {
+const printQuantity = (aOrderQty: OrderQuantity1): string => {
   switch (aOrderQty.type) {
     case "unitQuantity":
       return `Order quantity is ${aOrderQty.unitQuantity} units`;
@@ -244,3 +244,8 @@ const printList = (aList: number[]): void => {
 /** 5.1
  * Review of domain model
  */
+
+type CustomerId = { type: "customerId"; customerId: number };
+type WidgetCode = { type: "widgetCode"; widgetCode: string };
+type UnitOrderQuantity = { type: "unitQuantity"; unitQuantity: number };
+type KilogramOrderQuantity = { type: "kilogramQuantity"; kilogramQuantity: number };
