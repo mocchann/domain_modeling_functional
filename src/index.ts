@@ -240,3 +240,7 @@ const printList = (aList: number[]): void => {
       break;
   }
 };
+
+/** 5.1
+ * Review of domain model
+ */
