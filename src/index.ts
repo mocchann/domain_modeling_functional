@@ -212,3 +212,31 @@ type PaymentError =
 type SaveCustomer = (customer: "Customer") => void;
 // NextRandom = unit -> int
 type NextRandom = () => number;
+
+/** 4.6.4
+ * List and Collection Modeling
+ */
+
+type Order = {
+  orderId: "OrderId";
+  Lines: "OrderLine"[];
+};
+const aList = [1, 2, 3];
+const aNewList = [0, ...aList];
+
+const printList = (aList: number[]): void => {
+  switch (aList.length) {
+    case 0:
+      console.log("list is Empty");
+      break;
+    case 1:
+      console.log(`list has one element: ${aList[0]}`);
+      break;
+    case 2:
+      console.log(`list has two elements: ${aList[0]}, and ${aList[1]}`);
+      break;
+    default:
+      console.log(`list has more than two elements`);
+      break;
+  }
+};
