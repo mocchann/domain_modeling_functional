@@ -245,7 +245,14 @@ const printList = (aList: number[]): void => {
  * Review of domain model
  */
 
+/** 5.3
+ * Simple value modeling
+ */
+
 type CustomerId = { type: "customerId"; customerId: number };
 type WidgetCode = { type: "widgetCode"; widgetCode: string };
 type UnitOrderQuantity = { type: "unitQuantity"; unitQuantity: number };
-type KilogramOrderQuantity = { type: "kilogramQuantity"; kilogramQuantity: number };
+type KilogramOrderQuantity = {
+  type: "kilogramQuantity";
+  kilogramQuantity: number;
+};
