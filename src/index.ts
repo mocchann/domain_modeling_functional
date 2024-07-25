@@ -256,3 +256,26 @@ type KilogramOrderQuantity = {
   type: "kilogramQuantity";
   kilogramQuantity: number;
 };
+
+/** 5.3.1
+ * Use of Single Case Co-Use
+ */
+
+const CustomerId = (customerId: number): CustomerId => ({
+  type: "customerId",
+  customerId,
+});
+
+type OrderId = { type: "orderId"; orderId: number };
+
+const OrderId = (orderId: number): { type: "orderId"; orderId: number } => ({
+  type: "orderId",
+  orderId,
+});
+
+//値を定義
+const customerId = CustomerId(1);
+const orderId = OrderId(1);
+
+// 比較しようとするとコンパイルエラー
+console.log(customerId === orderId);
