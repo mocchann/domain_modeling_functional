@@ -302,3 +302,7 @@ const processCustomerId2 = (customerId: CustomerId): void => {
 };
 // 関数のシグネチャ
 // val processCustomerId2 : CustomerId -> unit
+
+/** 5.3.3
+ * Avoid performance problems due to simple types
+ */
