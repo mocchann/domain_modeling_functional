@@ -279,3 +279,26 @@ const orderId = OrderId(1);
 
 // 比較しようとするとコンパイルエラー
 console.log(customerId === orderId);
+
+// CustomerIdを引数に取る関数を定義
+const processCustomerId = (id: CustomerId): void => {
+  console.log(id);
+};
+
+// OrderIdを渡すとコンパイルエラー
+processCustomerId(orderId);
+
+// 構築
+const customerId2 = CustomerId(42);
+// 分解
+const { customerId: innerValue } = customerId2;
+
+console.log(innerValue); // 出力は42
+
+// 分解
+const processCustomerId2 = (customerId: CustomerId): void => {
+  const { customerId: innerValue } = customerId;
+  console.log(`${innerValue} is %i`);
+};
+// 関数のシグネチャ
+// val processCustomerId2 : CustomerId -> unit
