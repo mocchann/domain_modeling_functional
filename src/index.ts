@@ -105,25 +105,25 @@ const { First, Last } = personValue;
 const first = personValue.First;
 const last = personValue.Last;
 
-type UnitOrderQuantity = { type: "unitQuantity"; unitQuantity: number };
-type KilogramOrderQuantity = {
+type UnitOrderQuantity1 = { type: "unitQuantity"; unitQuantity: number };
+type KilogramOrderQuantity1 = {
   type: "kilogramQuantity";
   kilogramQuantity: number;
 };
 
-type OrderQuantity = UnitOrderQuantity | KilogramOrderQuantity;
+type OrderQuantity1 = UnitOrderQuantity1 | KilogramOrderQuantity1;
 
-const anOrderQtyInUnits: OrderQuantity = {
+const anOrderQtyInUnits: OrderQuantity1 = {
   type: "unitQuantity",
   unitQuantity: 5,
 };
 
-const anOrderQtyInKg: OrderQuantity = {
+const anOrderQtyInKg: OrderQuantity1 = {
   type: "kilogramQuantity",
   kilogramQuantity: 2.5,
 };
 
-const printQuantity = (aOrderQty: OrderQuantity): string => {
+const printQuantity = (aOrderQty: OrderQuantity1): string => {
   switch (aOrderQty.type) {
     case "unitQuantity":
       return `Order quantity is ${aOrderQty.unitQuantity} units`;
@@ -240,3 +240,65 @@ const printList = (aList: number[]): void => {
       break;
   }
 };
+
+/** 5.1
+ * Review of domain model
+ */
+
+/** 5.3
+ * Simple value modeling
+ */
+
+type CustomerId = { type: "customerId"; customerId: number };
+type WidgetCode = { type: "widgetCode"; widgetCode: string };
+type UnitOrderQuantity = { type: "unitQuantity"; unitQuantity: number };
+type KilogramOrderQuantity = {
+  type: "kilogramQuantity";
+  kilogramQuantity: number;
+};
+
+/** 5.3.1
+ * Use of Single Case Co-Use
+ */
+
+const CustomerId = (customerId: number): CustomerId => ({
+  type: "customerId",
+  customerId,
+});
+
+type OrderId = { type: "orderId"; orderId: number };
+
+const OrderId = (orderId: number): { type: "orderId"; orderId: number } => ({
+  type: "orderId",
+  orderId,
+});
+
+//値を定義
+const customerId = CustomerId(1);
+const orderId = OrderId(1);
+
+// 比較しようとするとコンパイルエラー
+console.log(customerId === orderId);
+
+// CustomerIdを引数に取る関数を定義
+const processCustomerId = (id: CustomerId): void => {
+  console.log(id);
+};
+
+// OrderIdを渡すとコンパイルエラー
+processCustomerId(orderId);
+
+// 構築
+const customerId2 = CustomerId(42);
+// 分解
+const { customerId: innerValue } = customerId2;
+
+console.log(innerValue); // 出力は42
+
+// 分解
+const processCustomerId2 = (customerId: CustomerId): void => {
+  const { customerId: innerValue } = customerId;
+  console.log(`${innerValue} is %i`);
+};
+// 関数のシグネチャ
+// val processCustomerId2 : CustomerId -> unit
