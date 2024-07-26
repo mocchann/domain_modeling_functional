@@ -306,3 +306,9 @@ const processCustomerId2 = (customerId: CustomerId): void => {
 /** 5.3.3
  * Avoid performance problems due to simple types
  */
+
+type UnitOrderQuantity2 = number;
+
+// [Strict]
+type UnitQuantity = { type: "unitQuantity"; unitQuantity: number };
+type UnitQuantities = { type: "unitQuantities"; unitQuantities: number[] };
