@@ -312,3 +312,20 @@ type UnitOrderQuantity2 = number;
 // [Strict]
 type UnitQuantity = { type: "unitQuantity"; unitQuantity: number };
 type UnitQuantities = { type: "unitQuantities"; unitQuantities: number[] };
+
+/** 5.4
+ * Modeling of complex data
+ */
+
+/** 5.4.1
+ * Modeling by record type
+ */
+
+type Order = {
+  customerInfo: CustomerInfo;
+  shippingAddress: ShippingAddress;
+  billingAddress: BillingAddress;
+  OrderLines: OrderLine[];
+  amountToBill: AmountToBill;
+};
+
