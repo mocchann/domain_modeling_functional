@@ -413,3 +413,94 @@ type ValidationResponse<A> = Promise<Result<A, ValidationError[]>>;
 type ValidateOrder = (
   unValidatedOrder: UnValidatedOrder
 ) => ValidationResponse<ValidatedOrder>;
+
+/** 5.6
+ * Identity Considerations: Value Objects
+ */
+
+const widgetCode1: WidgetCode = "W1234";
+const widgetCode2: WidgetCode = "W1234";
+console.log(widgetCode1 === widgetCode2); // true
+
+const name1 = { firstName: "Alex", lastName: "Adams" };
+const name2 = { firstName: "Alex", lastName: "Adams" };
+console.log(name1 === name2); // true
+
+const address1 = {
+  streetAddress: "123 Main St",
+  city: "New York",
+  zip: "90001",
+};
+const address2 = {
+  streetAddress: "123 Main St",
+  city: "New York",
+  zip: "90001",
+};
+console.log(address1 === address2); // true
+
+/** 5.7
+ * Identity Considerations: Entity Objects
+ */
+
+/** 5.7.1
+ * Entity identifier
+ */
+
+type ContactId = { type: "contactId"; contactId: number };
+type Contact = {
+  contactId: ContactId;
+  phoneNumber: PhoneNumber;
+  emailAddress: EmailAddress;
+};
+
+/** 5.7.2
+ * Adding Identifiers to Data Definitions
+ */
+
+// 未払いのケースの情報(ID無し)
+// type UnpaidInvoice = ...;
+
+// 払い済みのケースの情報(ID無し)
+// type PaidInvoice = ...;
+
+// 統合された情報(ID無し)
+type InvoiceInfo =
+  | { type: "Unpaid"; invoice: UnpaidInvoice }
+  | { type: "Paid"; invoice: PaidInvoice };
+
+// 請求書ID
+// type InvoiceId = ...;
+
+// トップレベルの請求書型
+type Invoice = {
+  invoiceId: InvoiceId; // 子のケースの「外側」
+  invoiceInfo: InvoiceInfo;
+};
+
+type UnpaidInvoice = {
+  InvoiceId: InvoiceId; // 「内側」に保持するID
+  // 未払いのケースのその他の情報
+};
+
+type PaidInvoice = {
+  InvoiceId: InvoiceId; // 「内側」に保持するID
+  // 払い済みのケースのその他の情報
+};
+
+// トップレベルの請求書型
+type Invoice =
+  | { type: "Unpaid"; invoice: UnpaidInvoice }
+  | { type: "Paid"; invoice: PaidInvoice };
+
+// const invoice: Invoice = ...;
+
+// この型ならパターンマッチのときにIDも含めて、すべてのデータに一度にアクセス可能
+// IDを共通で持つと以下のようにswitch文を書いてもIDにはアクセスできない
+// switch (invoice.type) {
+//   case "Unpaid":
+//     console.log(invoice.invoice.invoiceId);
+//     break;
+//   case "Paid":
+//     console.log(invoice.invoice.invoiceId);
+//     break;
+// }
