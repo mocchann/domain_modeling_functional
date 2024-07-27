@@ -356,3 +356,60 @@ type kilogramQuantity = number;
 type OrderQuantity =
   | { type: "Unit"; quantity: UnitQuantity }
   | { type: "Kilogram"; quantity: kilogramQuantity };
+
+/** 5.5
+ * Workflow modeling with functions
+ */
+
+// type ValidateOrder = (unValidateOrder: UnvalidateOrder) => Result<ValidatedOrder, Error>;
+
+/** 5.5.1
+ * Organize complex inputs and outputs
+ */
+
+type PlaceOrderEvents = {
+  AcknowledgmentSent: AcknowledgmentSent;
+  OrderPlaced: OrderPlaced;
+  BillableOrderPlaced: BillableOrderPlaced;
+};
+
+type PlaceOrder = (unValidateOrder: UnvalidateOrder) => PlaceOrderEvents;
+
+type EnvelopeContents = { type: "EnvelopeContents"; contents: string };
+type CategorizeMail =
+  | { type: "Quote"; form: QuoteForm }
+  | { type: "Order"; form: OrderForm };
+
+type CateforizeInboundMail = (
+  envelopeContents: EnvelopeContents
+) => CategorizeMail;
+
+// type CalculatePrices = (
+//   orderForm: OrderForm,
+//   productCatalog: ProductCatalog
+// ) => PricedOrder;
+
+// type CalculatePricesInputs = {
+//   orderForm: OrderForm;
+//   productCatalog: ProductCatalog;
+// }
+// type CalculatePrices = (inputs: CalculatePricesInputs) => PricedOrder;
+
+/** 5.2.2
+ * Document effects with function signatures
+ */
+
+// type ValidateOrder = (
+//   unValidateOrder: UnvalidateOrder
+// ) => Promise<Result<ValidatedOrder, ValidationError[]>>;
+
+type ValidationError = {
+  fieldName: string;
+  ErrorDescription: string;
+};
+
+type ValidationResponse<A> = Promise<Result<A, ValidationError[]>>;
+
+type ValidateOrder = (
+  unValidatedOrder: UnValidatedOrder
+) => ValidationResponse<ValidatedOrder>;
