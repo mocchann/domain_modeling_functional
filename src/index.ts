@@ -217,7 +217,7 @@ type NextRandom = () => number;
  * List and Collection Modeling
  */
 
-type Order = {
+type Order1 = {
   orderId: "OrderId";
   Lines: "OrderLine"[];
 };
@@ -250,7 +250,7 @@ const printList = (aList: number[]): void => {
  */
 
 type CustomerId = { type: "customerId"; customerId: number };
-type WidgetCode = { type: "widgetCode"; widgetCode: string };
+type WidgetCode1 = { type: "widgetCode"; widgetCode: string };
 type UnitOrderQuantity = { type: "unitQuantity"; unitQuantity: number };
 type KilogramOrderQuantity = {
   type: "kilogramQuantity";
@@ -302,3 +302,205 @@ const processCustomerId2 = (customerId: CustomerId): void => {
 };
 // 関数のシグネチャ
 // val processCustomerId2 : CustomerId -> unit
+
+/** 5.3.3
+ * Avoid performance problems due to simple types
+ */
+
+type UnitOrderQuantity2 = number;
+
+// [Strict]
+type UnitQuantity1 = { type: "unitQuantity"; unitQuantity: number };
+type UnitQuantities = { type: "unitQuantities"; unitQuantities: number[] };
+
+/** 5.4
+ * Modeling of complex data
+ */
+
+/** 5.4.1
+ * Modeling by record type
+ */
+
+type Order = {
+  customerInfo: CustomerInfo;
+  shippingAddress: ShippingAddress;
+  billingAddress: BillingAddress;
+  OrderLines: OrderLine[];
+  amountToBill: AmountToBill;
+};
+
+/** 5.4.2
+ * Modeling of unknown types
+ */
+
+type Undefined = undefined;
+
+type CustomerInfo = Undefined;
+type ShippingAddress = Undefined;
+type BillingAddress = Undefined;
+type OrderLine = Undefined;
+type AmountToBill = Undefined;
+
+/** 5.4.3
+ * Modeling by choise type
+ */
+
+type WidgetCode = string;
+type GizmoCode = string;
+type ProductCode =
+  | { type: "Widget"; code: WidgetCode }
+  | { type: "Gizmo"; code: GizmoCode };
+
+type UnitQuantity = number;
+type kilogramQuantity = number;
+type OrderQuantity =
+  | { type: "Unit"; quantity: UnitQuantity }
+  | { type: "Kilogram"; quantity: kilogramQuantity };
+
+/** 5.5
+ * Workflow modeling with functions
+ */
+
+// type ValidateOrder = (unValidateOrder: UnvalidateOrder) => Result<ValidatedOrder, Error>;
+
+/** 5.5.1
+ * Organize complex inputs and outputs
+ */
+
+type PlaceOrderEvents = {
+  AcknowledgmentSent: AcknowledgmentSent;
+  OrderPlaced: OrderPlaced;
+  BillableOrderPlaced: BillableOrderPlaced;
+};
+
+type PlaceOrder = (unValidateOrder: UnvalidateOrder) => PlaceOrderEvents;
+
+type EnvelopeContents = { type: "EnvelopeContents"; contents: string };
+type CategorizeMail =
+  | { type: "Quote"; form: QuoteForm }
+  | { type: "Order"; form: OrderForm };
+
+type CateforizeInboundMail = (
+  envelopeContents: EnvelopeContents
+) => CategorizeMail;
+
+// type CalculatePrices = (
+//   orderForm: OrderForm,
+//   productCatalog: ProductCatalog
+// ) => PricedOrder;
+
+// type CalculatePricesInputs = {
+//   orderForm: OrderForm;
+//   productCatalog: ProductCatalog;
+// }
+// type CalculatePrices = (inputs: CalculatePricesInputs) => PricedOrder;
+
+/** 5.2.2
+ * Document effects with function signatures
+ */
+
+// type ValidateOrder = (
+//   unValidateOrder: UnvalidateOrder
+// ) => Promise<Result<ValidatedOrder, ValidationError[]>>;
+
+type ValidationError = {
+  fieldName: string;
+  ErrorDescription: string;
+};
+
+type ValidationResponse<A> = Promise<Result<A, ValidationError[]>>;
+
+type ValidateOrder = (
+  unValidatedOrder: UnValidatedOrder
+) => ValidationResponse<ValidatedOrder>;
+
+/** 5.6
+ * Identity Considerations: Value Objects
+ */
+
+const widgetCode1: WidgetCode = "W1234";
+const widgetCode2: WidgetCode = "W1234";
+console.log(widgetCode1 === widgetCode2); // true
+
+const name1 = { firstName: "Alex", lastName: "Adams" };
+const name2 = { firstName: "Alex", lastName: "Adams" };
+console.log(name1 === name2); // true
+
+const address1 = {
+  streetAddress: "123 Main St",
+  city: "New York",
+  zip: "90001",
+};
+const address2 = {
+  streetAddress: "123 Main St",
+  city: "New York",
+  zip: "90001",
+};
+console.log(address1 === address2); // true
+
+/** 5.7
+ * Identity Considerations: Entity Objects
+ */
+
+/** 5.7.1
+ * Entity identifier
+ */
+
+type ContactId = { type: "contactId"; contactId: number };
+type Contact = {
+  contactId: ContactId;
+  phoneNumber: PhoneNumber;
+  emailAddress: EmailAddress;
+};
+
+/** 5.7.2
+ * Adding Identifiers to Data Definitions
+ */
+
+// 未払いのケースの情報(ID無し)
+// type UnpaidInvoice = ...;
+
+// 払い済みのケースの情報(ID無し)
+// type PaidInvoice = ...;
+
+// 統合された情報(ID無し)
+type InvoiceInfo =
+  | { type: "Unpaid"; invoice: UnpaidInvoice }
+  | { type: "Paid"; invoice: PaidInvoice };
+
+// 請求書ID
+// type InvoiceId = ...;
+
+// トップレベルの請求書型
+type Invoice = {
+  invoiceId: InvoiceId; // 子のケースの「外側」
+  invoiceInfo: InvoiceInfo;
+};
+
+type UnpaidInvoice = {
+  InvoiceId: InvoiceId; // 「内側」に保持するID
+  // 未払いのケースのその他の情報
+};
+
+type PaidInvoice = {
+  InvoiceId: InvoiceId; // 「内側」に保持するID
+  // 払い済みのケースのその他の情報
+};
+
+// トップレベルの請求書型
+type Invoice =
+  | { type: "Unpaid"; invoice: UnpaidInvoice }
+  | { type: "Paid"; invoice: PaidInvoice };
+
+// const invoice: Invoice = ...;
+
+// この型ならパターンマッチのときにIDも含めて、すべてのデータに一度にアクセス可能
+// IDを共通で持つと以下のようにswitch文を書いてもIDにはアクセスできない
+// switch (invoice.type) {
+//   case "Unpaid":
+//     console.log(invoice.invoice.invoiceId);
+//     break;
+//   case "Paid":
+//     console.log(invoice.invoice.invoiceId);
+//     break;
+// }
