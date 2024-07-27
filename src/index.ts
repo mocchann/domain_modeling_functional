@@ -329,3 +329,14 @@ type Order = {
   amountToBill: AmountToBill;
 };
 
+/** 5.4.2
+ * Modeling of unknown types
+ */
+
+type Undefined = undefined;
+
+type CustomerInfo = Undefined;
+type ShippingAddress = Undefined;
+type BillingAddress = Undefined;
+type OrderLine = Undefined;
+type AmountToBill = Undefined;
