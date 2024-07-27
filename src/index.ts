@@ -217,7 +217,7 @@ type NextRandom = () => number;
  * List and Collection Modeling
  */
 
-type Order = {
+type Order1 = {
   orderId: "OrderId";
   Lines: "OrderLine"[];
 };
@@ -250,7 +250,7 @@ const printList = (aList: number[]): void => {
  */
 
 type CustomerId = { type: "customerId"; customerId: number };
-type WidgetCode = { type: "widgetCode"; widgetCode: string };
+type WidgetCode1 = { type: "widgetCode"; widgetCode: string };
 type UnitOrderQuantity = { type: "unitQuantity"; unitQuantity: number };
 type KilogramOrderQuantity = {
   type: "kilogramQuantity";
@@ -310,7 +310,7 @@ const processCustomerId2 = (customerId: CustomerId): void => {
 type UnitOrderQuantity2 = number;
 
 // [Strict]
-type UnitQuantity = { type: "unitQuantity"; unitQuantity: number };
+type UnitQuantity1 = { type: "unitQuantity"; unitQuantity: number };
 type UnitQuantities = { type: "unitQuantities"; unitQuantities: number[] };
 
 /** 5.4
@@ -340,3 +340,19 @@ type ShippingAddress = Undefined;
 type BillingAddress = Undefined;
 type OrderLine = Undefined;
 type AmountToBill = Undefined;
+
+/** 5.4.3
+ * Modeling by choise type
+ */
+
+type WidgetCode = string;
+type GizmoCode = string;
+type ProductCode =
+  | { type: "Widget"; code: WidgetCode }
+  | { type: "Gizmo"; code: GizmoCode };
+
+type UnitQuantity = number;
+type kilogramQuantity = number;
+type OrderQuantity =
+  | { type: "Unit"; quantity: UnitQuantity }
+  | { type: "Kilogram"; quantity: kilogramQuantity };
