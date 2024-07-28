@@ -446,8 +446,8 @@ console.log(address1 === address2); // true
  * Entity identifier
  */
 
-type ContactId = { type: "contactId"; contactId: number };
-type Contact = {
+type ContactId1 = { type: "contactId"; contactId: number };
+type Contact1 = {
   contactId: ContactId;
   phoneNumber: PhoneNumber;
   emailAddress: EmailAddress;
@@ -504,3 +504,48 @@ type Invoice =
 //     console.log(invoice.invoice.invoiceId);
 //     break;
 // }
+
+/** 5.7.3
+ * Implementing Equivalence for Entities
+ */
+
+type ContactId = string;
+type PhoneNumber = string;
+type EmailAddress = string;
+
+class Contact {
+  contactId: ContactId;
+  phoneNumber: PhoneNumber;
+  emailAddress: EmailAddress;
+
+  constructor(
+    contactId: ContactId,
+    phoneNumber: PhoneNumber,
+    emailAddress: EmailAddress
+  ) {
+    this.contactId = contactId;
+    this.phoneNumber = phoneNumber;
+    this.emailAddress = emailAddress;
+  }
+
+  equals(obj: any): boolean {
+    if (obj instanceof Contact) {
+      return obj.contactId === this.contactId;
+    }
+    return false;
+  }
+
+  getHashCode(): number {
+    return this.hashString(this.contactId);
+  }
+
+  private hashString = (str: string): number => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0;
+    }
+    return hash;
+  };
+}
