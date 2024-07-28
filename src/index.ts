@@ -549,3 +549,19 @@ class Contact {
     return hash;
   };
 }
+
+const contactId: ContactId1 = { type: "contactId", contactId: 1 };
+
+const contact1 = {
+  contactId: contactId,
+  phoneNumber: "123-456-7890",
+  emailAddress: "bob@example.com",
+};
+
+const contact2 = {
+  contactId: contactId,
+  phoneNumber: "123-456-7890",
+  emailAddress: "robert@example.com",
+};
+
+console.log(contact1 === contact2); // true
