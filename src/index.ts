@@ -570,3 +570,20 @@ const objContact = new Contact(
 );
 
 console.log(objContact.equals(contact2)); // true
+
+/** 5.7.4
+ * Immutability and Identity
+ */
+
+const initialPerson = {
+  personId: 42,
+  name: "Joseph",
+};
+
+const updatedPerson = {
+  ...initialPerson,
+  name: "Joe",
+};
+
+// type UpdateName = (person: Person, newName: string) => void;
+type UpdateName = (person: Person, newName: string) => Person;
