@@ -509,9 +509,11 @@ type Invoice =
  * Implementing Equivalence for Entities
  */
 
-type ContactId = string;
+type ContactId = number;
 type PhoneNumber = string;
 type EmailAddress = string;
+
+type ContactIdType = { type: "contactId"; contactId: number };
 
 class Contact {
   contactId: ContactId;
@@ -529,14 +531,11 @@ class Contact {
   }
 
   equals(obj: any): boolean {
-    if (obj instanceof Contact) {
-      return obj.contactId === this.contactId;
-    }
-    return false;
+    return obj.contactId === this.contactId;
   }
 
   getHashCode(): number {
-    return this.hashString(this.contactId);
+    return this.hashString(this.contactId.toString());
   }
 
   private hashString = (str: string): number => {
@@ -550,18 +549,24 @@ class Contact {
   };
 }
 
-const contactId: ContactId1 = { type: "contactId", contactId: 1 };
+const contactId: ContactIdType = { type: "contactId", contactId: 1 };
 
 const contact1 = {
-  contactId: contactId,
+  contactId: contactId.contactId,
   phoneNumber: "123-456-7890",
   emailAddress: "bob@example.com",
 };
 
 const contact2 = {
-  contactId: contactId,
+  contactId: contactId.contactId,
   phoneNumber: "123-456-7890",
   emailAddress: "robert@example.com",
 };
 
-console.log(contact1 === contact2); // true
+const objContact = new Contact(
+  contact1.contactId,
+  contact1.phoneNumber,
+  contact1.emailAddress
+);
+
+console.log(objContact.equals(contact2)); // true
