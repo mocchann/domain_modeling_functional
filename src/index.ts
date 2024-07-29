@@ -325,7 +325,7 @@ type Order = {
   customerInfo: CustomerInfo;
   shippingAddress: ShippingAddress;
   billingAddress: BillingAddress;
-  OrderLines: OrderLine[];
+  orderLines: OrderLine[];
   amountToBill: AmountToBill;
 };
 
@@ -338,7 +338,7 @@ type Undefined = undefined;
 type CustomerInfo = Undefined;
 type ShippingAddress = Undefined;
 type BillingAddress = Undefined;
-type OrderLine = Undefined;
+// type OrderLine = Undefined;
 type AmountToBill = Undefined;
 
 /** 5.4.3
@@ -446,8 +446,8 @@ console.log(address1 === address2); // true
  * Entity identifier
  */
 
-type ContactId = { type: "contactId"; contactId: number };
-type Contact = {
+type ContactId1 = { type: "contactId"; contactId: number };
+type Contact1 = {
   contactId: ContactId;
   phoneNumber: PhoneNumber;
   emailAddress: EmailAddress;
@@ -504,3 +504,124 @@ type Invoice =
 //     console.log(invoice.invoice.invoiceId);
 //     break;
 // }
+
+/** 5.7.3
+ * Implementing Equivalence for Entities
+ */
+
+type ContactId = number;
+type PhoneNumber = string;
+type EmailAddress = string;
+
+type ContactIdType = { type: "contactId"; contactId: number };
+
+class Contact {
+  contactId: ContactId;
+  phoneNumber: PhoneNumber;
+  emailAddress: EmailAddress;
+
+  constructor(
+    contactId: ContactId,
+    phoneNumber: PhoneNumber,
+    emailAddress: EmailAddress
+  ) {
+    this.contactId = contactId;
+    this.phoneNumber = phoneNumber;
+    this.emailAddress = emailAddress;
+  }
+
+  equals(obj: any): boolean {
+    return obj.contactId === this.contactId;
+  }
+
+  getHashCode(): number {
+    return this.hashString(this.contactId.toString());
+  }
+
+  private hashString = (str: string): number => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0;
+    }
+    return hash;
+  };
+}
+
+const contactId: ContactIdType = { type: "contactId", contactId: 1 };
+
+const contact1 = {
+  contactId: contactId.contactId,
+  phoneNumber: "123-456-7890",
+  emailAddress: "bob@example.com",
+};
+
+const contact2 = {
+  contactId: contactId.contactId,
+  phoneNumber: "123-456-7890",
+  emailAddress: "robert@example.com",
+};
+
+const objContact = new Contact(
+  contact1.contactId,
+  contact1.phoneNumber,
+  contact1.emailAddress
+);
+
+console.log(objContact.equals(contact2)); // true
+
+/** 5.7.4
+ * Immutability and Identity
+ */
+
+const initialPerson = {
+  personId: 42,
+  name: "Joseph",
+};
+
+const updatedPerson = {
+  ...initialPerson,
+  name: "Joe",
+};
+
+// type UpdateName = (person: Person, newName: string) => void;
+type UpdateName = (person: Person, newName: string) => Person;
+
+/** 5.8
+ * aggregating
+ */
+
+type OrderLine = {
+  orderLineId: number;
+  price: number;
+};
+
+const changeOrderLinePrice = (
+  order: Order,
+  orderLineId: OrderLine["orderLineId"],
+  newPrice: OrderLine["price"]
+) => {
+  const targetOrderLine = order.orderLines.find(
+    (orderLine) => orderLine.orderLineId === orderLineId
+  );
+
+  const newOrderLine = {
+    ...targetOrderLine,
+    price: newPrice,
+  };
+
+  const newOrderLines = order.orderLines.map((orderLine) => {
+    if (orderLine.orderLineId === orderLineId) {
+      return newOrderLine;
+    }
+    return orderLine;
+  });
+
+  const newOrder = {
+    ...order,
+    orderLines: newOrderLines,
+  };
+
+  return newOrder;
+};
