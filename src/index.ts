@@ -325,7 +325,7 @@ type Order = {
   customerInfo: CustomerInfo;
   shippingAddress: ShippingAddress;
   billingAddress: BillingAddress;
-  OrderLines: OrderLine[];
+  orderLines: OrderLine[];
   amountToBill: AmountToBill;
 };
 
@@ -338,7 +338,7 @@ type Undefined = undefined;
 type CustomerInfo = Undefined;
 type ShippingAddress = Undefined;
 type BillingAddress = Undefined;
-type OrderLine = Undefined;
+// type OrderLine = Undefined;
 type AmountToBill = Undefined;
 
 /** 5.4.3
@@ -587,3 +587,41 @@ const updatedPerson = {
 
 // type UpdateName = (person: Person, newName: string) => void;
 type UpdateName = (person: Person, newName: string) => Person;
+
+/** 5.8
+ * aggregating
+ */
+
+type OrderLine = {
+  orderLineId: number;
+  price: number;
+};
+
+const changeOrderLinePrice = (
+  order: Order,
+  orderLineId: OrderLine["orderLineId"],
+  newPrice: OrderLine["price"]
+) => {
+  const targetOrderLine = order.orderLines.find(
+    (orderLine) => orderLine.orderLineId === orderLineId
+  );
+
+  const newOrderLine = {
+    ...targetOrderLine,
+    price: newPrice,
+  };
+
+  const newOrderLines = order.orderLines.map((orderLine) => {
+    if (orderLine.orderLineId === orderLineId) {
+      return newOrderLine;
+    }
+    return orderLine;
+  });
+
+  const newOrder = {
+    ...order,
+    orderLines: newOrderLines,
+  };
+
+  return newOrder;
+};
