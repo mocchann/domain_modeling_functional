@@ -625,3 +625,7 @@ const changeOrderLinePrice = (
 
   return newOrder;
 };
+
+/** 5.8.1
+ * Guarantee of consistency and invariant conditions through aggregations
+ */
