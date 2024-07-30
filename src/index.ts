@@ -625,3 +625,112 @@ const changeOrderLinePrice = (
 
   return newOrder;
 };
+
+/** 5.8.1
+ * Guarantee of consistency and invariant conditions through aggregations
+ */
+
+/** 5.8.2
+ * Aggregate Reference
+ */
+
+// bad
+// type Order = {
+//   orderId: OrderId;
+//   customer: Customer; // 関連する顧客に関する情報
+//   orderLines: OrderLine[];
+// };
+
+// good
+// type Order = {
+//   orderId: OrderId;
+//   customerId: CustomerId; // 関連する顧客に対する参照
+//   orderLines: OrderLine[];
+// };
+
+/** 5.9
+ * Combine all
+ */
+
+namespace OrderTaking.Domain {
+  // 製品コード関連
+  type WidgetCode = { type: "widgetCode"; widgetCode: string };
+  // 制約: 先頭が"W" + 数字4桁
+  type GizmoCode = { type: "gizmoCode"; gizmoCode: string };
+  // 制約: 先頭が"G" + 数字4桁
+  type ProductCode = WidgetCode | GizmoCode;
+  // 注文数量関連
+  type UnitOrderQuantity = { type: "unitQuantity"; unitQuantity: number };
+  type KilogramOrderQuantity = {
+    type: "kilogramQuantity";
+    kilogramQuantity: number;
+  };
+  type OrderQuantity = UnitOrderQuantity | KilogramOrderQuantity;
+
+  // 上記は値オブジェクトのため、識別子(id)は不要
+
+  // 注文は変更されてもアイデンティティが維持されるため、idを使ってモデル化する
+  // 現時点ではidがstring or number or Guidかはわからないが、必要なことはわかっているためundefinedでモデル化する
+  type OrderId = undefined;
+  type OrderLineId = undefined;
+  type CustomerId = undefined;
+
+  type CustomerInfo = undefined;
+  type ShippingAddress = undefined;
+  type BillingAddress = undefined;
+  type Price = undefined;
+  type BillingAmount = undefined;
+
+  type OrderLine = {
+    id: OrderLineId;
+    orderId: OrderId;
+    productCode: ProductCode;
+    orderQuantity: OrderQuantity;
+    price: Price;
+  };
+
+  type Order = {
+    id: OrderId; // エンティティのID
+    customerId: CustomerId; // 顧客の参照
+    shippingAddress: ShippingAddress;
+    billingAddress: BillingAddress;
+    orderLines: OrderLine[];
+    amountToBill: BillingAmount;
+  };
+
+  // 最後にワークフロー全体を定義する
+  // ワークフローの入力であるUnvalidateOrder<未検証の注文>は注文書からそのまま作成されるため
+  // numberやstringなどプリミティブな型しか含まない
+  type UnvalidatedOrder = {
+    orderId: OrderId;
+    customerInfo: CustomerInfo;
+    shippingAddress: ShippingAddress;
+    billingAddress: BillingAddress;
+    orderLines: OrderLine[];
+    amountToBill: BillingAmount;
+  };
+  // ↑じゃあorderLinesはどうする？？？ここよくわからん
+
+  // ワークフローの出力には2つの型が必要
+  // 1: ワークフローが成功したときのイベント型
+  type PlaceOrderEvents = {
+    acknowledgmentSent: AcknowledgmentSent;
+    orderPlaced: OrderPlaced;
+    billableOrderPlaced: BillableOrderPlaced;
+  };
+  // 2: ワークフローが失敗したときのエラー型
+  type ValidationError = {
+    fieldName: string;
+    errorDescription: string;
+  };
+
+  type PlaceOrderError =
+    | { type: "validationError"; error: ValidationError[] }
+    | { type: "otherError"; error: OtherError[] };
+
+  // 最後に注文確定のワークフローを表すトップレベルの関数を定義する
+  // 「注文確定」プロセス
+  type PlaceOrder = (
+    unvalidatedOrder: UnvalidatedOrder
+  ) => Result<PlaceOrderEvents, PlaceOrderError>;
+}
