@@ -629,3 +629,21 @@ const changeOrderLinePrice = (
 /** 5.8.1
  * Guarantee of consistency and invariant conditions through aggregations
  */
+
+/** 5.8.2
+ * Aggregate Reference
+ */
+
+// bad
+// type Order = {
+//   orderId: OrderId;
+//   customer: Customer; // 関連する顧客に関する情報
+//   orderLines: OrderLine[];
+// };
+
+// good
+// type Order = {
+//   orderId: OrderId;
+//   customerId: CustomerId; // 関連する顧客に対する参照
+//   orderLines: OrderLine[];
+// };
