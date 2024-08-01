@@ -747,4 +747,15 @@ namespace Chapter_6 {
    */
 
   type UnitQuantity = { type: "unitQuantity"; unitQuantity: number };
+
+  const createUnitQuantity = (() => {
+    let unitQuantity: UnitQuantity;
+
+    return (args: number): UnitQuantity => {
+      if (unitQuantity === null) {
+        unitQuantity = { type: "unitQuantity", unitQuantity: args };
+      }
+      return unitQuantity;
+    };
+  })();
 }
