@@ -745,4 +745,6 @@ namespace Chapter_6 {
   /** 6.1
    * Simple value completeness
    */
+
+  type UnitQuantity = { type: "unitQuantity"; unitQuantity: number };
 }
