@@ -758,4 +758,42 @@ namespace Chapter_6 {
       return unitQuantity;
     };
   })();
+
+  const UnitQuantity = () => {
+    type Result<S, F> =
+      | { type: "success"; ok: S }
+      | { type: "failure"; error: F };
+
+    const value = (unit: UnitQuantity): number => {
+      return unit.unitQuantity;
+    };
+
+    const create = (qty: number): Result<UnitQuantity, string> => {
+      if (qty < 1) {
+        throw new Error("UnitQuantity can not be negative");
+      } else if (qty > 1000) {
+        throw new Error("UnitQuantity can not be more than 1000");
+      } else {
+        return {
+          type: "success",
+          ok: { type: "unitQuantity", unitQuantity: qty },
+        };
+      }
+    };
+
+    return { value, create };
+  };
+
+  const result = UnitQuantity().create(1);
+
+  switch (result.type) {
+    case "success":
+      console.log(`Success. Value is ${result.ok}`);
+      const innerValue = UnitQuantity().value(result.ok);
+      console.log(`Inner value is ${innerValue}`);
+      break;
+    case "failure":
+      console.log(result.error);
+      break;
+  }
 }
