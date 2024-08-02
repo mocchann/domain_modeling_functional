@@ -796,4 +796,8 @@ namespace Chapter_6 {
       console.log(result.error);
       break;
   }
+
+  /** 6.2
+   * Measurement Unit
+   */
 }
