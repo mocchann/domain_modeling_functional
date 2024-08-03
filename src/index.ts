@@ -823,4 +823,21 @@ namespace Chapter_6 {
     type: "kilogramQuantity",
     kilogramQuantity: fiveKilos,
   };
+
+  /** 6.3
+   * Enforcement of invariant conditions by type systems
+   */
+
+  type NotEmptyList<A> = {
+    first: A;
+    Rest: A[];
+  };
+
+  type Order = {
+    customerInfo: CustomerInfo;
+    shippingAddress: ShippingAddress;
+    billingAddress: BillingAddress;
+    orderLines: NotEmptyList<OrderLine>; // 1つの注文には少なくとも1つの注文明細行が必要
+    amountToBill: AmountToBill;
+  };
 }
