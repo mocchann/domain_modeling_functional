@@ -796,4 +796,98 @@ namespace Chapter_6 {
       console.log(result.error);
       break;
   }
+
+  /** 6.2
+   * Measurement Unit
+   */
+
+  type Kg = "kg";
+  type M = "m";
+
+  type Brand<T, U> = T & { __brand: U };
+  type Weight = Brand<number, Kg>;
+  type Meter = Brand<number, M>;
+
+  const fiveKilos: Weight = 5.0 as Weight;
+  const fiveMeters: Meter = 5.0 as Meter;
+
+  // fiveKilos = fiveMeters; // コンパイルエラー
+  // const listOfWeights: Weight[] = [fiveKilos, fiveMeters]; // コンパイルエラー
+
+  type KilogramOrderQuantity = {
+    type: "kilogramQuantity";
+    kilogramQuantity: Weight;
+  };
+
+  const quantity: KilogramOrderQuantity = {
+    type: "kilogramQuantity",
+    kilogramQuantity: fiveKilos,
+  };
+
+  /** 6.3
+   * Enforcement of invariant conditions by type systems
+   */
+
+  type NotEmptyList<A> = {
+    first: A;
+    Rest: A[];
+  };
+
+  type Order = {
+    customerInfo: CustomerInfo;
+    shippingAddress: ShippingAddress;
+    billingAddress: BillingAddress;
+    orderLines: NotEmptyList<OrderLine>; // 1つの注文には少なくとも1つの注文明細行が必要
+    amountToBill: AmountToBill;
+  };
+
+  /** 6.4
+   * Representing business rules in type systems
+   */
+
+  // フラグを使って検証済みかどうかを表現する方法(これではフラグの目的・更新はいつどんな状況でするのかわからない)
+  type CustomerEmail = {
+    emailAddress: EmailAddress;
+    isVerrified: boolean;
+  };
+
+  // 検証済み・未検証は別々のものとしてモデル化するべき
+  type CustomerEmail =
+    | { type: "unverified"; emailAddress: EmailAddress }
+    | { type: "verified"; emailAddress: VerifiedEmailAddress }; // Emailの型も別で作る
+
+  type SendPasswordResetEmail = (email: VerifiedEmailAddress) => void;
+
+  // 顧客に連絡を取るというビジネスルール。顧客は「email」または「郵便のアドレス」を持っている必要がある。
+  // モデル化するが、以下は正しくない。
+  type Contact = {
+    name: Name;
+    email: EmailContactInfo;
+    address: PostalContactInfo;
+  };
+
+  // これも正しくない。emailとaddressの両方持っていない可能性もあるため、ビジネスルールに反している
+  type Contact = {
+    name: Name;
+    email?: EmailContactInfo;
+    address?: PostalContactInfo;
+  };
+
+  // これが正しいモデル化(今回の場合、メールのみ/住所のみ/両方持つの3パターンである)
+  type BothContactMethods = {
+    email: EmailContactInfo;
+    address: PostalContactInfo;
+  };
+
+  // 選択型
+  type ContactInfo =
+    | { type: "emailOnly"; emailContactInfo: EmailContactInfo }
+    | { type: "postalOnly"; postalContactInfo: PostalContactInfo }
+    | { type: "emailAndAddr"; bothContactMethods: BothContactMethods };
+
+  // 上記を使ってContact型を定義
+  type Contact = {
+    name: Name;
+    contactInfo: ContactInfo;
+  };
 }
