@@ -800,4 +800,27 @@ namespace Chapter_6 {
   /** 6.2
    * Measurement Unit
    */
+
+  type Kg = "kg";
+  type M = "m";
+
+  type Brand<T, U> = T & { __brand: U };
+  type Weight = Brand<number, Kg>;
+  type Meter = Brand<number, M>;
+
+  const fiveKilos: Weight = 5.0 as Weight;
+  const fiveMeters: Meter = 5.0 as Meter;
+
+  // fiveKilos = fiveMeters; // コンパイルエラー
+  // const listOfWeights: Weight[] = [fiveKilos, fiveMeters]; // コンパイルエラー
+
+  type KilogramOrderQuantity = {
+    type: "kilogramQuantity";
+    kilogramQuantity: Weight;
+  };
+
+  const quantity: KilogramOrderQuantity = {
+    type: "kilogramQuantity",
+    kilogramQuantity: fiveKilos,
+  };
 }
