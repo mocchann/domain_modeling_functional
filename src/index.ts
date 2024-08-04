@@ -976,4 +976,15 @@ namespace Chapter_7 {
     orderLines: UnvalidatedOrderLine[];
     amountToBill: UnvalidatedAmountToBill;
   };
+
+  /** 7.1.1
+   * Commands as input
+   */
+
+  type PlaceOrder = {
+    orderForm: UnvalidatedOrder;
+    timestamp: Date;
+    userId: string;
+    // etc...
+  };
 }
