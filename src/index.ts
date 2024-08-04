@@ -940,4 +940,25 @@ namespace Chapter_6 {
 
     return newOrder;
   };
+
+  /** 6.5.2
+   * Consistency between different contexts
+   */
+
+  /** 6.5.3
+   * Consistency between aggregates in the same context
+   */
+
+  // 口座間送金の場合、口座がAccount<口座>集約で表現
+  // このケースではトランザクションが独自の識別子を持っていることが多く、トランザクション自体がDDDのエンティティであることを意味する
+  type MoneyTransfer = {
+    id: MoneyTransferId;
+    toAccount: AccountId;
+    fromAccount: AccountId;
+    Amount: Money;
+  };
+
+  /** 6.5.4
+   * Multiple aggregates acting on the same data
+   */
 }
