@@ -962,3 +962,18 @@ namespace Chapter_6 {
    * Multiple aggregates acting on the same data
    */
 }
+
+namespace Chapter_7 {
+  /** 7.1
+   * Input Workflow
+   */
+
+  type UnvalidatedOrder = {
+    orderId: string;
+    customerInfo: UnvalidatedCustomerInfo;
+    shippingAddress: UnvalidatedShippingAddress;
+    billingAddress: UnvalidatedBillingAddress;
+    orderLines: UnvalidatedOrderLine[];
+    amountToBill: UnvalidatedAmountToBill;
+  };
+}
