@@ -830,7 +830,7 @@ namespace Chapter_6 {
 
   type NotEmptyList<A> = {
     first: A;
-    Rest: A[];
+    rest: A[];
   };
 
   type Order = {
@@ -890,4 +890,75 @@ namespace Chapter_6 {
     name: Name;
     contactInfo: ContactInfo;
   };
+
+  /** 6.5
+   * Integrity
+   */
+
+  /** 6.5.1
+   * Consistency within one aggregate
+   */
+
+  const changeOrderLinePrice = (
+    order: Order,
+    orderLineId: OrderLine["orderLineId"],
+    newPrice: OrderLIne["price"]
+  ): Order => {
+    const targetOrderLine = order.orderLines.rest.find(
+      (orderLine) => orderLine.orderLineId === orderLineId
+    );
+
+    if (!targetOrderLine) {
+      throw new Error("Order line not found");
+    }
+
+    const newOrderLine = {
+      ...targetOrderLine,
+      price: newPrice,
+    };
+
+    const newOrderLines = order.orderLines.rest.map((orderLine) => {
+      if (orderLine.orderLineId === orderLineId) {
+        return newOrderLine;
+      }
+      return orderLine;
+    });
+
+    const newAmountToBill = newOrderLines.reduce(
+      (sum, line) => sum + line.price,
+      0
+    );
+
+    const newOrder = {
+      ...order,
+      orderLines: {
+        first: newOrderLines[0],
+        rest: newOrderLines,
+      },
+      amountToBill: newAmountToBill,
+    };
+
+    return newOrder;
+  };
+
+  /** 6.5.2
+   * Consistency between different contexts
+   */
+
+  /** 6.5.3
+   * Consistency between aggregates in the same context
+   */
+
+  // 口座間送金の場合、口座がAccount<口座>集約で表現
+  // このケースではトランザクションが独自の識別子を持っていることが多く、トランザクション自体がDDDのエンティティであることを意味する
+  type MoneyTransfer = {
+    id: MoneyTransferId;
+    toAccount: AccountId;
+    fromAccount: AccountId;
+    Amount: Money;
+  };
+
+  /** 6.5.4
+   * Multiple aggregates acting on the same data
+   */
 }
