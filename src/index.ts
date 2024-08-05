@@ -1009,4 +1009,52 @@ namespace Chapter_7 {
     | { type: "place"; placeOrder: PlaceOrder }
     | { type: "change"; changeOrder: ChangeOrder }
     | { type: "cancel"; cancelOrder: CancelOrder };
+
+  /** 7.2
+   * Modeling orders by sets of states
+   */
+
+  // 状態をすべて別々のフラグで表現する
+  type Order = {
+    orderId: OrderId;
+    // ...
+    isValidated: boolean; // 検証時に設定される
+    isPriced: boolean; // 価格計算時に設定される
+    amountToBill?: number; // 価格計算時に設定される
+  };
+  // これではいろんなドメインを表現するのが難しく、不必要なフラグが増え、条件分岐が乱立する複雑なコードになる
+  // ドメインをモデル化するより良い方法は、注文の各状態に対して新しい型を作成すること
+
+  // 検証済みの注文
+  type ValidatedOrder = ValidatedCustomerInfo &
+    ValidatedShippingAddress &
+    ValidatedBillingAddress &
+    ValidatedOrderLine[];
+
+  // 検証済みの注文に対応する型定義
+  type ValidatedOrder = {
+    orderId: OrderId;
+    customerInfo: ValidatedCustomerInfo;
+    shippingAddress: ValidatedShippingAddress;
+    billingAddress: ValidatedBillingAddress;
+    orderLines: ValidatedOrderLine[];
+  };
+
+  // 価格計算済みの注文の型
+  type PricedOrder = {
+    orderId: OrderId;
+    customerInfo: ValidatedCustomerInfo;
+    shippingAddress: ValidatedShippingAddress;
+    billingAddress: ValidatedBillingAddress;
+    // 検証済みの注文明細行とは異なり、OrderLine→PricedOrderLineに変更
+    orderLines: PricedOrderLine[];
+    amountToBill: BillingAmount;
+  };
+
+  // とりうる状態をすべて作成したら、トップレベルの型を作成する
+  type Order =
+    | { type: "unvalidatedOrder"; unvalidatedOrder: UnvalidatedOrder }
+    | { type: "validatedOrder"; validatedOrder: ValidatedOrder }
+    | { type: "pricedOrder"; pricedOrder: PricedOrder };
+  // etc...
 }
