@@ -998,4 +998,15 @@ namespace Chapter_7 {
     userId: string;
     // etc...
   };
+
+  type PlaceOrder = Command<UnvalidatedOrder>;
+
+  /** 7.1.3
+   * Combine multiple commands into one type
+   */
+
+  type OrderTakingCommand =
+    | { type: "place"; placeOrder: PlaceOrder }
+    | { type: "change"; changeOrder: ChangeOrder }
+    | { type: "cancel"; cancelOrder: CancelOrder };
 }
