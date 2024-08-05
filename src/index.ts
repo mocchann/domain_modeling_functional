@@ -987,4 +987,15 @@ namespace Chapter_7 {
     userId: string;
     // etc...
   };
+
+  /** 7.1.2
+   * Sharing common structures through generics
+   */
+
+  type Command<Data> = {
+    data: Data;
+    timestamp: Date;
+    userId: string;
+    // etc...
+  };
 }
