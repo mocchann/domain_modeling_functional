@@ -1057,4 +1057,8 @@ namespace Chapter_7 {
     | { type: "validatedOrder"; validatedOrder: ValidatedOrder }
     | { type: "pricedOrder"; pricedOrder: PricedOrder };
   // etc...
+
+  /** 7.3
+   * State Machine
+   */
 }
