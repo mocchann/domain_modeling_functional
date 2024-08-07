@@ -1061,4 +1061,6 @@ namespace Chapter_7 {
   /** 7.3
    * State Machine
    */
+
+  type OrderStatus = "Unvalidated" | "Validated" | "Priced";
 }
