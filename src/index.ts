@@ -1061,4 +1061,8 @@ namespace Chapter_7 {
   /** 7.3
    * State Machine
    */
+
+  /** 7.3.1
+   * Why use state machines?
+   */
 }
