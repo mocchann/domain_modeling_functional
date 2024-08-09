@@ -1065,4 +1065,53 @@ namespace Chapter_7 {
   /** 7.3.1
    * Why use state machines?
    */
+
+  /** 7.3.2
+   * How to implement a simple state machine in F#
+   */
+
+  type Item = {
+    name: string;
+    price: number;
+    // etc...
+  };
+  type EmptyCart = { type: "emptyCart" };
+  type ActiveCartData = { unpaidItems: Item[] };
+  type PaidCartData = { paidItems: Item[]; Payment: number };
+
+  type ShoppingCart =
+    | EmptyCart
+    | { type: "activeCart"; activeCart: ActiveCartData }
+    | { type: "paidCart"; paidCart: PaidCartData };
+
+  const addItem = (cart: ShoppingCart, item: Item): ShoppingCart => {
+    switch (cart.type) {
+      case "emptyCart":
+        return { type: "activeCart", activeCart: { unpaidItems: [item] } };
+      case "activeCart":
+        return {
+          type: "activeCart",
+          activeCart: { unpaidItems: [...cart.activeCart.unpaidItems, item] },
+        };
+      case "paidCart":
+        return cart;
+    }
+  };
+
+  const makePayment = (cart: ShoppingCart, payment: number): ShoppingCart => {
+    switch (cart.type) {
+      case "activeCart":
+        return {
+          type: "paidCart",
+          paidCart: {
+            paidItems: cart.activeCart.unpaidItems,
+            Payment: payment,
+          },
+        };
+      case "emptyCart":
+        return cart;
+      case "paidCart":
+        return cart;
+    }
+  };
 }
