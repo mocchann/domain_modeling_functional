@@ -1114,4 +1114,8 @@ namespace Chapter_7 {
         return cart;
     }
   };
+
+  /** 7.4.1
+   * Steps in verification
+   */
 }
