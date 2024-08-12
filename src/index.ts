@@ -1144,4 +1144,11 @@ namespace Chapter_7 {
   /** 7.4.2
    * Steps in pricing
    */
+
+  type GetProductPrice = (productCode: ProductCode) => Price;
+
+  type PriceOrder = (
+    getProductPrice: GetProductPrice
+  ) => (validatedOrder: ValidateOrder) => PriceOrder;
+
 }
