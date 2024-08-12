@@ -1118,4 +1118,26 @@ namespace Chapter_7 {
   /** 7.4.1
    * Steps in verification
    */
+
+  type CheckProductCodeExists = (productCode: ProductCode) => boolean;
+  type CheckedAddress = { type: "checkedAddress"; address: UnvalidatedAddress };
+  type AddressValidationError = {
+    type: "addressValidationError";
+    error: string;
+  };
+  type CheckAddressExists = (
+    unvalidatedAddress: UnvalidatedAddress
+  ) => Result<CheckedAddress, AddressValidationError>;
+
+  type Result<T, E> =
+    | { success: true; value: T }
+    | { success: false; error: E };
+
+  type ValidateOrder = (
+    checkProductCodeExists: CheckProductCodeExists
+  ) => (
+    checkAddressExists: CheckAddressExists
+  ) => (
+    unvalidatedOrder: UnvalidatedOrder
+  ) => Result<ValidatedOrder, ValidationError>;
 }
