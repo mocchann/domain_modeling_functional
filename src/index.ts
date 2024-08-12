@@ -1140,4 +1140,8 @@ namespace Chapter_7 {
   ) => (
     unvalidatedOrder: UnvalidatedOrder
   ) => Result<ValidatedOrder, ValidationError>;
+
+  /** 7.4.2
+   * Steps in pricing
+   */
 }
