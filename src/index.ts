@@ -1195,4 +1195,10 @@ namespace Chapter_7 {
   ) => (
     sendOrderAcknowledgment: SendOrderAcknowledgment
   ) => (priceOrder: PriceOrder) => OrderAcknowledgmentSent | undefined;
+
+  /** 7.4.4
+   * Create an event to return
+   */
+
+
 }
