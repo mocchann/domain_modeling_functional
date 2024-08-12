@@ -1200,5 +1200,30 @@ namespace Chapter_7 {
    * Create an event to return
    */
 
+  type OrderPlaced = PricedOrder;
+  type BillableOrderPlaced = {
+    orderId: OrderId;
+    billingAddress: Address;
+    amountToBill: BillingAmount;
+  };
 
+  // 実際にイベントを返すにはこれらのイベントを保持する専用の型を作成する方法もある
+  type PlacedOrderResult = {
+    orderPlaced: OrderPlaced;
+    billableOrderPlaced: BillableOrderPlaced;
+    orderAcknowledgmentSent: OrderAcknowledgmentSent | undefined;
+  };
+
+  // しかし、このワークフローに新しいイベントを追加していく可能性が高いため、↑のようなレコード型を定義してしまうと変更が難しくなる
+  // そこでワークフローがイベントのリストを返すことにする
+  type PlaceOrderEvent =
+    | { type: "orderPlaced"; orderPlaced: OrderPlaced }
+    | { type: "billableOrderPlaced"; billableOrderPlaced: BillableOrderPlaced }
+    | {
+        type: "orderAcknowledgment";
+        orderAcknowledgment: OrderAcknowledgmentSent;
+      };
+
+  // そしてワークフローの最終ステップで↑のイベントのリストを発行する
+  type CreateEvents = (pricedOrder: PricedOrder) => PlaceOrderEvent[];
 }
