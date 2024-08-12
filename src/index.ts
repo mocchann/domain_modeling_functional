@@ -1151,4 +1151,48 @@ namespace Chapter_7 {
     getProductPrice: GetProductPrice
   ) => (validatedOrder: ValidateOrder) => PriceOrder;
 
+  /** 7.4.3
+   * Steps in Order Confirmation
+   */
+
+  type HtmlString = { type: "htmlString"; html: string };
+  type OrderAcknowledgment = {
+    emailAddress: EmailAddress;
+    letter: HtmlString;
+  };
+
+  type CreateOrderAcknowledgmentLetter = (priceOrder: PriceOrder) => HtmlString;
+
+  type SendOrderAcknowledgment = (
+    orderAcknowledgment: OrderAcknowledgment
+  ) => (orderAcknowledgment: OrderAcknowledgment) => void;
+
+  // 確認注文書が送られたら、<注文確認を送った>イベントを返したい。そこですぐ重つくのはbooleanを返すことだが、真偽値では情報量が少ない
+  // type SendOrderAcknowledgment = (
+  //   orderAcknowledgment: OrderAcknowledgment
+  // ) => boolean;
+
+  // そこで、真偽値ではなく、成功したかどうかを表すResult型を使うか?
+  type SendResult = Sent | NotSent;
+  type SendOrderAcknowledgment = (
+    orderAcknowledgment: OrderAcknowledgment
+  ) => SendResult;
+
+  // あるいは、サービス自体が省略可能なOrderAcknowledgmentSentイベントを返すようにするか?
+  type SendOrderAcknowledgment = (
+    orderAcknowledgment: OrderAcknowledgment
+  ) => OrderAcknowlegmentSent | undefined;
+
+  // 注文確認ステップの出力
+  type OrderAcknowledgmentSent = {
+    orderId: OrderId;
+    emailAddress: EmailAddress;
+  };
+
+  // これらのステップを組み合わせてこのステップの関数型を定義する
+  type AcknowledgeOrder = (
+    createOrderAcknowledgmentLetter: CreateOrderAcknowledmentLetter
+  ) => (
+    sendOrderAcknowledgment: SendOrderAcknowledgment
+  ) => (priceOrder: PriceOrder) => OrderAcknowledgmentSent | undefined;
 }
