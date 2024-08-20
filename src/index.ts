@@ -1251,4 +1251,13 @@ namespace Chapter_7 {
   ) => (
     unvalidatedOrder: UnvalidatedOrder
   ) => AsyncResult<ValidatedOrder, ValidationError>;
+
+  /** 7.5.2
+   * Effects in the pricing step
+   */
+
+  type PricingError = { type: "pricingError"; error: string };
+  type PriceOrder = (
+    getProductPrice: GetProductPrice
+  ) => (validateOrder: ValidateOrder) => Result<PricedOrder, PricingError>;
 }
