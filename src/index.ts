@@ -1260,4 +1260,18 @@ namespace Chapter_7 {
   type PriceOrder = (
     getProductPrice: GetProductPrice
   ) => (validateOrder: ValidateOrder) => Result<PricedOrder, PricingError>;
+
+  /** 7.5.3
+   * Effects in the confirmation step
+   */
+
+  type SendOrderAcknowledgment = (
+    orderAcknowledgment: OrderAcknowledgment
+  ) => Promise<SendResult>;
+
+  type AcknowledgeOrder = (
+    createOrderAcknowledgmentLetter: CreateOrderAcknowledmentLetter
+  ) => (
+    sendOrderAcknowledgment: SendOrderAcknowledgment
+  ) => (priceOrder: PriceOrder) => Promise<OrderAcknowledgmentSent | undefined>;
 }
