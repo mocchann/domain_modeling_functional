@@ -1226,4 +1226,29 @@ namespace Chapter_7 {
 
   // そしてワークフローの最終ステップで↑のイベントのリストを発行する
   type CreateEvents = (pricedOrder: PricedOrder) => PlaceOrderEvent[];
+
+  /** 7.5
+   * Documentation of effects
+   */
+
+  /** 7.5.1
+   * Effects in the verification step
+   */
+
+  // type CheckProductCodeExists = (productCode: ProductCode) => boolean;
+
+  type AsyncResult<S, F> = Promise<Result<S, F>>;
+
+  type CheckAddressExists = (
+    unvalidatedAddress: UnvalidatedAddress
+  ) => AsyncResult<CheckedAddress, AddressValidationError>;
+
+  // AsyncResultはそれを含むすべてのコードに伝染するため、Result→AsyncResultに変更が必要
+  type ValidateOrder = (
+    checkProductCodeExists: CheckProductCodeExists
+  ) => (
+    checkAddressExists: CheckAddressExists
+  ) => (
+    unvalidatedOrder: UnvalidatedOrder
+  ) => AsyncResult<ValidatedOrder, ValidationError>;
 }
