@@ -1274,4 +1274,196 @@ namespace Chapter_7 {
   ) => (
     sendOrderAcknowledgment: SendOrderAcknowledgment
   ) => (priceOrder: PriceOrder) => Promise<OrderAcknowledgmentSent | undefined>;
+
+  /** 7.6
+   * Synthesising workflows from steps
+   */
+
+  // 依存関係を取り除いた入力と出力だけの全体のステップ
+  // 各typeの出力と入力の型が一致していないのはあとで修正が必要
+
+  type ValidateOrder = (
+    unvalidatedOrder: UnvalidatedOrder // 入力
+  ) => AsyncResult<ValidatedOrder, ValidationError>; // 出力
+
+  type PriceOrder = (
+    validatedOrder: ValidatedOrder // 入力
+  ) => Result<PricedOrder, PricingError>; // 出力
+
+  type AcknowledgeOrder = (
+    pricedOrder: PriceOrder // 入力
+  ) => Promise<OrderAcknowledgmentSent | undefined>; // 出力
+
+  type CreateEvents = (
+    pricedOrder: PricedOrder // 入力
+  ) => PlaceOrderEvent[]; // 出力
+
+  /** 7.7
+   * Are dependencies part of the design?
+   */
+
+  // 依存関係を明確にするために、各サブステップの設計で追加パラメータを導入した
+
+  type ValidateOrder = (
+    checkProductCodeExists: CheckProductCodeExists // 明示的な依存関係
+  ) => (
+    checkAddressExists: CheckAddressExists // 明示的な依存関係
+  ) => (
+    unvalidatedOrder: UnvalidatedOrder // 入力
+  ) => AsyncResult<ValidatedOrder, ValidationError[]>;
+
+  type PriceOrder = (
+    getProductPrice: GetProductPrice // 明示的な依存関係
+  ) => (
+    validatedOrder: ValidatedOrder // 入力
+  ) => Result<PricedOrder, PricingError>; // 出力
+
+  // プロセスが目的を達成するためにどのようなシステムと連携する必要があるのか、本当に気にするべきか？
+  // ↑の視点に立つなら、プロセスの定義はインプットとアウトプットのみに簡略化され次のようになる
+
+  type ValidateOrder = (
+    unvalidatedOrder: UnvalidatedOrder // 入力
+  ) => AsyncResult<ValidatedOrder, ValidationError[]>; // 出力
+
+  type PriceOrder = (
+    validatedOrder: ValidatedOrder // 入力
+  ) => Result<PricedOrder, PricingError>; // 出力
+
+  // どちらのアプローチが良いのかは以下ガイドラインに沿って考える
+  // - パブリックAPIで公開される関数っ→依存関係の情報を呼び出し元から隠す
+  // - 内部で使用される関数→依存関係を明示する
+
+  // トップレベルのPlaceOrder<注文確定>ワークフロー関数は呼び出し側が依存関係を知る必要がないので非公開
+  type PlaceOrderWorkflow = (
+    placeOrder: PlaceOrder // 入力
+  ) => AsyncResult<PlaceOrderEvent[], PlaceOrderError>; // 出力
+  // ワークフロー内部の各ステップが実際に必要とするものを文書化できるため依存関係を明示する
+
+  /** 7.8
+   * Completion of the pipeline
+   */
+
+  // -----------------
+  // 入力データ
+  // -----------------
+
+  type UnvalidatedOrder = {
+    orderId: string;
+    customerInfo: UnvalidatedCustomer;
+    shippingAddress: UnvalidatedAddress;
+  } & UnvalidatedCustomer = {
+    name: string;
+    email: string;
+  } & UnvalidateedAddress = {
+    // ...
+  };
+
+  // -----------------
+  // 入力コマンド
+  // -----------------
+
+  type Command<Data> = {
+    data: Data;
+    timestamp: Date;
+    userId: string;
+    // etc
+  };
+
+  type PlaceOrderCommand = Command<UnvalidatedOrder>;
+
+  // 次はアウトプットとワークフロー本体の定義
+
+  // -----------------
+  // パブリックAPI
+  // -----------------
+
+  /// 受注確定ワークフローの成功出力
+  type OrderPlaced = "...";
+  type BillableOrderPlaced = "...";
+  type OrderAcknowledgmentSent = "...";
+  type PlaceOrderEvent =
+    | { type: "orderPlaced"; orderPlaced: OrderPlaced }
+    | { type: "billableOrderPlaced"; billableOrderPlaced: BillableOrderPlaced }
+    | { type: "orderAcknowledgmentSent"; acknowledgmentSent :OrderAcknowledgmentSent };
+
+  // 受注確定ワークフローの失敗出力
+  type PlaceOrderError = "...";
+
+  type PlaceOrderWorkflow = (
+    placeOrderCommand: PlaceOrderCommand // 入力コマンド
+  ) => AsyncResult<PlaceOrderEvent[], PlaceOrderError>; // 出力イベント
+
+  /** 7.8.1
+   * internal step
+   */
+
+  // ドメインをAPIモジュールから型を持ってくる
+  import DomainApi from "./domain";
+
+  // -----------------
+  // 注文のライフサイクル
+  // -----------------
+
+  // 検証済みの状態
+  type ValidatedOrderLine = "...";
+  type ValidatedOrder = {
+    orderId: OrderId;
+    customerInfo: CustomerInfo;
+    shippingAddress: Address;
+    billingAddress: Address;
+    orderLines: ValidatedOrderLine[];
+  }
+  & OrderId = undefined
+  & CustomerId = undefined
+  & Address = undefined;
+
+  // 価格計算済みの状態
+  type PricedOrderLine = "...";
+  type PricedOrder = "...";
+
+  // 全状態の結合
+  type Order =
+    | { type: "unvalidated"; unvalidatedOrder: UnvalidatedOrder }
+    | { type: "validated"; validatedOrder: ValidatedOrder }
+    | { type: "priced"; pricedOrder: PricedOrder };
+    // etc
+
+  // -----------------
+  // 内部ステップの定義
+  // -----------------
+
+  // ---- 注文の検証 ----
+
+  // 注文の検証が使用するサービス
+  type CheckProductCodeExists = (productCode: ProductCode) => boolean;
+
+  type AddressValidationError = "...";
+  type CheckedAddress = "...";
+  type CheckAddressExists = (
+    unvalidatedAddress: UnvalidatedAddress
+  ) => AsyncResult<CheckedAddress, AddressValidationError>;
+
+  type ValidateOrder = (
+    checkProductCodeExists: CheckProductCodeExists // 依存関係
+  ) => (
+    checkAddressExists: CheckAddressExists // 依存関係
+  ) => (
+    unvalidatedOrder: UnvalidatedOrder // 入力
+  ) => AsyncResult<ValidatedOrder, AddressValidationError[]> // 出力
+  & ValidationError = "...";
+
+  // ---- 注文の価格計算 ----
+
+  // 注文の価格計算が使用するサービス
+  type GetProductPrice = (productCode: ProductCode) => Price;
+
+  type PricingError = "...";
+
+  type PriceOrder = (
+    getProductPrice: GetProductPrice // 依存関係
+  ) => (
+    validatedOrder: ValidatedOrder // 入力
+  ) => Result<PricedOrder, PricingError>; // 出力
+
+  // etc
 }
