@@ -1467,3 +1467,36 @@ namespace Chapter_7 {
 
   // etc
 }
+
+namespace Chapter_8 {
+  /** 8.2.1
+   * treat a function as a thing
+   */
+
+  const plus3 = (x: number): number => x + 3;
+  const times2 = (x: number): number => x * 2;
+  const square = (x: number): number => x * x;
+  const addThree = plus3;
+
+  // listOfFunctions : (int -> int) list
+  const listOfFunctions = [addThree, times2, square];
+
+  // リストをループして各関数を順番に評価できる
+  for (const f of listOfFunctions) {
+    const result = f(100);
+    console.log(`If 100 is the input, the output is ${result} result`);
+  }
+
+  /** 8.2.2
+   * Function as input
+   */
+
+  const evalWith5ThenAdd2 = (fn: (x: number) => number) => fn(5) + 2;
+
+  // 関数をパラメータとして渡せる
+  const add1 = (x: number): number => x + 1;
+  evalWith5ThenAdd2(add1); // return 8
+
+  // squareの場合も同様に渡せる
+  evalWith5ThenAdd2(square); // return 27
+}
