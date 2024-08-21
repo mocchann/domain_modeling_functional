@@ -1591,4 +1591,34 @@ namespace Chapter_8 {
   const isEven = (x: number): boolean => x % 2 === 0;
   const printBool = (x: boolean): string => `value is ${x}`;
   const isEvenThenPrint = (x: number): string => printBool(isEven(x));
+
+  /** 8.4.3
+   * Challenges in synthesising functions
+   */
+
+  class Some<T> {
+    constructor(public value: T) {}
+  }
+
+  class None {
+    // Noneは値を持たない
+  }
+
+  type Option<T> = Some<T> | None;
+
+  const some = <T>(value: T): Option<T> => new Some(value);
+  const none = (): Option<never> => new None();
+
+  const printOption = (x: Option<number>) => {
+    switch (true) {
+      case x instanceof Some:
+        console.log(`The int is ${x.value}`);
+        break;
+      case x instanceof None:
+        console.log("No value");
+        break;
+    }
+  };
+
+  printOption(some(add1(5))); // return "The int is 6"
 }
