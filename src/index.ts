@@ -1527,4 +1527,18 @@ namespace Chapter_8 {
   const add = (x: number, y: number): number => x + y;
   // 新しい関数を返すことで1パラメータの関数に変換できる
   const addGenerator = (x: number) => (y: number) => x + y;
+
+  /** 8.2.5
+   * partial application
+   */
+
+  const sayGreeting = (greeting: string, name: string): void =>
+    console.log(`${greeting}, ${name}!`);
+
+  // greetingパラメータを1つだけ渡すと、それが組み込まれた新しい関数をいくつも作ることができる
+  const sayHello = (name: string): void => sayGreeting("Hello", name);
+  const sayGoodbye = (name: string): void => sayGreeting("Goodbye", name);
+
+  sayHello("John"); // return "Hello, John!"
+  sayGoodbye("John"); // return "Goodbye, John!"
 }
