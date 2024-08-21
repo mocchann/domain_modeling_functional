@@ -1467,3 +1467,158 @@ namespace Chapter_7 {
 
   // etc
 }
+
+namespace Chapter_8 {
+  /** 8.2.1
+   * treat a function as a thing
+   */
+
+  const plus3 = (x: number): number => x + 3;
+  const times2 = (x: number): number => x * 2;
+  const square = (x: number): number => x * x;
+  const addThree = plus3;
+
+  // listOfFunctions : (int -> int) list
+  const listOfFunctions = [addThree, times2, square];
+
+  // リストをループして各関数を順番に評価できる
+  for (const f of listOfFunctions) {
+    const result = f(100);
+    console.log(`If 100 is the input, the output is ${result} result`);
+  }
+
+  /** 8.2.2
+   * Function as input
+   */
+
+  const evalWith5ThenAdd2 = (fn: (x: number) => number) => fn(5) + 2;
+
+  // 関数をパラメータとして渡せる
+  const add1 = (x: number): number => x + 1;
+  evalWith5ThenAdd2(add1); // return 8
+
+  // squareの場合も同様に渡せる
+  evalWith5ThenAdd2(square); // return 27
+
+  /** 8.2.3
+   * Function as output
+   */
+
+  const add2 = (x: number): number => x + 2;
+  const add3 = (x: number): number => x + 3;
+
+  // 似たような関数の重複を解消するため、加算する数が組み込まれた「加算」関数を返す関数を作る
+  const adderGenerator = (numberToAdd: number): ((x: number) => number) => {
+    return (x: number): number => numberToAdd + x;
+  };
+
+  // 結果は以下のようになる
+  const ad1 = adderGenerator(1);
+  ad1(2); // return 3
+
+  const ad100 = adderGenerator(100);
+  ad100(2); // return 102
+
+  /** 8.2.4
+   * conversion to curry
+   */
+
+  // 複数の引数を取る関数をカリー化する
+  const add = (x: number, y: number): number => x + y;
+  // 新しい関数を返すことで1パラメータの関数に変換できる
+  const addGenerator = (x: number) => (y: number) => x + y;
+
+  /** 8.2.5
+   * partial application
+   */
+
+  const sayGreeting = (greeting: string, name: string): void =>
+    console.log(`${greeting}, ${name}!`);
+
+  // greetingパラメータを1つだけ渡すと、それが組み込まれた新しい関数をいくつも作ることができる
+  const sayHello = (name: string): void => sayGreeting("Hello", name);
+  const sayGoodbye = (name: string): void => sayGreeting("Goodbye", name);
+
+  sayHello("John"); // return "Hello, John!"
+  sayGoodbye("John"); // return "Goodbye, John!"
+
+  /** 8.3
+   * global function
+   */
+
+  const twelveDividedBy = (n: NonZeroInteger) => {
+    switch (n.value) {
+      case 6:
+        return 2;
+      case 5:
+        return 2;
+      case 4:
+        return 3;
+      case 3:
+        return 4;
+      case 2:
+        return 6;
+      case 1:
+        return 12;
+      case 0:
+        throw new Error("Division by zero");
+      default:
+        console.log("Default case");
+    }
+  };
+
+  // 関数へのすべての入力は有効な出力を持ち、例外がないようにしたい
+  // そこで1つの手法として、入力を制限して不正な値を排除するというものがある(※元コードがF#なのでintegerという命名をしている)
+
+  type NonZeroInteger = { type: "nonZeroInteger"; value: number };
+  const createNonZeroInteger = (n: number): NonZeroInteger => {
+    if (n === 0) {
+      throw new Error("Zero is not allowed");
+    }
+    return { type: "nonZeroInteger", value: n };
+  };
+
+  // もう1つの手法としては、出力を拡張すること
+  // 入力として0を受け付けるが、出力を「何かある」「何もない」のOption型に変更する
+
+  /** 8.4.1
+   * function synthesis
+   */
+
+  const add1ThenSquare = (x: number): number => square(add1(x));
+  add1ThenSquare(5); // return 36
+
+  const isEven = (x: number): boolean => x % 2 === 0;
+  const printBool = (x: boolean): string => `value is ${x}`;
+  const isEvenThenPrint = (x: number): string => printBool(isEven(x));
+
+  /** 8.4.3
+   * Challenges in synthesizing functions
+   */
+
+  class Some<T> {
+    constructor(public value: T) {}
+  }
+
+  class None {
+    // Noneは値を持たない
+  }
+
+  type Option<T> = Some<T> | None;
+
+  const some = <T>(value: T): Option<T> => new Some(value);
+  const none = (): Option<never> => new None();
+
+  const printOption = (x: Option<number>) => {
+    switch (true) {
+      case x instanceof Some:
+        console.log(`The int is ${x.value}`);
+        break;
+      case x instanceof None:
+        console.log("No value");
+        break;
+    }
+  };
+
+  printOption(some(add1(5))); // return "The int is 6"
+}
