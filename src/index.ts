@@ -1499,4 +1499,23 @@ namespace Chapter_8 {
 
   // squareの場合も同様に渡せる
   evalWith5ThenAdd2(square); // return 27
+
+  /** 8.2.3
+   * Function as output
+   */
+
+  const add2 = (x: number): number => x + 2;
+  const add3 = (x: number): number => x + 3;
+
+  // 似たような関数の重複を解消するため、加算する数が組み込まれた「加算」関数を返す関数を作る
+  const adderGenerator = (numberToAdd: number): ((x: number) => number) => {
+    return (x: number): number => numberToAdd + x;
+  };
+
+  // 結果は以下のようになる
+  const ad1 = adderGenerator(1);
+  ad1(2); // return 3
+
+  const ad100 = adderGenerator(100);
+  ad100(2); // return 102
 }
