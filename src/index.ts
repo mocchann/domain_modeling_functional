@@ -1580,4 +1580,15 @@ namespace Chapter_8 {
 
   // もう1つの手法としては、出力を拡張すること
   // 入力として0を受け付けるが、出力を「何かある」「何もない」のOption型に変更する
+
+  /** 8.4.1
+   * function synthesis
+   */
+
+  const add1ThenSquare = (x: number): number => square(add1(x));
+  add1ThenSquare(5); // return 36
+
+  const isEven = (x: number): boolean => x % 2 === 0;
+  const printBool = (x: boolean): string => `value is ${x}`;
+  const isEvenThenPrint = (x: number): string => printBool(isEven(x));
 }
