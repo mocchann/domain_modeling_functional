@@ -1541,4 +1541,43 @@ namespace Chapter_8 {
 
   sayHello("John"); // return "Hello, John!"
   sayGoodbye("John"); // return "Goodbye, John!"
+
+  /** 8.3
+   * global function
+   */
+
+  const twelveDividedBy = (n: NonZeroInteger) => {
+    switch (n.value) {
+      case 6:
+        return 2;
+      case 5:
+        return 2;
+      case 4:
+        return 3;
+      case 3:
+        return 4;
+      case 2:
+        return 6;
+      case 1:
+        return 12;
+      case 0:
+        throw new Error("Division by zero");
+      default:
+        console.log("Default case");
+    }
+  };
+
+  // 関数へのすべての入力は有効な出力を持ち、例外がないようにしたい
+  // そこで1つの手法として、入力を制限して不正な値を排除するというものがある(※元コードがF#なのでintegerという命名をしている)
+
+  type NonZeroInteger = { type: "nonZeroInteger"; value: number };
+  const createNonZeroInteger = (n: number): NonZeroInteger => {
+    if (n === 0) {
+      throw new Error("Zero is not allowed");
+    }
+    return { type: "nonZeroInteger", value: n };
+  };
+
+  // もう1つの手法としては、出力を拡張すること
+  // 入力として0を受け付けるが、出力を「何かある」「何もない」のOption型に変更する
 }
