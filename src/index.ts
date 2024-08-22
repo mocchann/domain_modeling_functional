@@ -1629,23 +1629,23 @@ namespace Chapter_9 {
    */
 
   namespace Domain {
-    class OrderId {
-      private constructor(public readonly value: string) {}
+    type OrderId = {
+      readonly value: string;
+    };
 
-      // OrderId生成の静的メソッド
-      static create(str: string): OrderId {
-        if (!str || str.length === 0) {
-          throw new Error("OrderId must not be null or empty");
-        } else if (str.length > 50) {
-          throw new Error("OrderId must not be more than 50 chars");
-        }
-        return new OrderId(str);
+    // OrderId生成関数
+    const create = (str: string): OrderId => {
+      if (!str || str.length === 0) {
+        throw new Error("OrderId must not be null or empty");
+      } else if (str.length > 50) {
+        throw new Error("OrderId must not be more than 50 chars");
       }
+      return { value: str };
+    };
 
-      // OrderIdから値を取得する静的メソッド
-      static value(orderId: OrderId): string {
-        return orderId.value;
-      }
-    }
+    // OrderIdから値を取得する関数
+    const value = (orderId: OrderId): string => {
+      return orderId.value;
+    };
   }
 }
