@@ -1622,3 +1622,30 @@ namespace Chapter_8 {
 
   printOption(some(add1(5))); // return "The int is 6"
 }
+
+namespace Chapter_9 {
+  /** 9.1
+   * Dealing with simple types
+   */
+
+  namespace Domain {
+    class OrderId {
+      private constructor(public readonly value: string) {}
+
+      // OrderId生成の静的メソッド
+      static create(str: string): OrderId {
+        if (!str || str.length === 0) {
+          throw new Error("OrderId must not be null or empty");
+        } else if (str.length > 50) {
+          throw new Error("OrderId must not be more than 50 chars");
+        }
+        return new OrderId(str);
+      }
+
+      // OrderIdから値を取得する静的メソッド
+      static value(orderId: OrderId): string {
+        return orderId.value;
+      }
+    }
+  }
+}
