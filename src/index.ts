@@ -1678,5 +1678,83 @@ namespace Chapter_9 {
     ) => {
       // ...
     }
+
+    /** 9.3
+     * Implementation of verification steps
+     */
+
+    // 前章では以下のように型定義をしていた
+    type CheckProductCodeExists = (
+      unvalidatedAddress: UnvalidatedAddress
+    ) => AsyncResult<CheckedAddress, AddressValidationError>;
+
+    type ValidateOrder = (
+      checkProductCodeExists: CheckProductCodeExists // 依存関係
+    ) => (
+      checkAddressExists: CheckAddressExists // AsyncResultを返す依存関係
+    ) => (
+      unvalidatedOrder: UnvalidatedOrder // 入力
+    ) => AsyncResult<ValidatedOrder, ValidationError[]>; // 出力
+
+    // 本章ではエフェクトを排除するので、AsyncResultを削除する
+    type CheckAddressExists = (unvalidatedAddress: UnvalidatedAddress) => CheckedAddress;
+
+    type ValidateOrder = (
+      checkProductCodeExists: CheckProductCodeExists
+    ) => (
+      checkAddressExists: CheckAddressExists
+    ) => (
+      unvalidatedOrder: UnvalidatedOrder
+    ) => ValidatedOrder; 
+
+    // 未検証の注文のOrderId<注文ID>文字列を使って、OrderIdドメイン型を作成
+    // 未検証の注文のUnvalidatedCustomerInfo<未検証の顧客情報>フィールドを使って、CustomerInfo<顧客情報>ドメイン型を作成
+    // 未検証の注文のShippingAddress<配送先住所>フィールド、つまりUnvalidatedAddress<未検証の住所>を使って、Address<住所>ドメイン型を作成
+    // BillingAddress<請求先住所>と他のすべてのプロパティについても同様に行う
+    // ValidatedOrderのすべての構成要素が利用位可能になったら、通常の方法でレコードを作成
+
+    const validateOrder: ValidateOrder = (
+      checkProductCodeExists: CheckProductCodeExists
+    ) => (
+      checkAddressExists: CheckAddressExists
+    ) => (
+      unvalidatedOrder: UnvalidatedOrder
+    ): ValidatedOrder => {
+      const orderId: OrderId = create(unvalidatedOrder.orderId);
+
+      const customerInfo: CustomerInfo = toCustomerInfo(unvalidatedOrder.customerInfo); // ヘルパー関数(toCustomerInfo)
+
+      const shippingAddress: ShippingAddress = toAddress(unvalidatedOrder.shippingAddress); // ヘルパー関数(toAddress)
+
+      // すべてのフィールドの準備ができたら、それらを使って新しい「検証済みの注文」レコードを作成し返す
+      return {
+        orderId,
+        customerInfo,
+        shippingAddress,
+        // billingAddress,
+        // Lines = ...
+      }
+    };
+
+    // 注文の構成要素を変換する際にも上記実装とまったく同じアプローチを使用できる
+    // toCustomerInfoの実装において、UnvalidatedCustomerInfoからCustomerInfoを構築している
+
+    const toCustomerInfo = (customer: UnvalidatedCustomerInfo): CustomerInfo => {
+      const firstName: FirstName = create(customer.firstName);
+      const lastName: LastName = create(customer.lastName);
+      const emailAddress: EmailAddress = create(customer.emailAddress);
+
+      const name: PersonalName = {
+        firstName,
+        lastName,
+      };
+
+      const customerInfo: CustomerINfo = {
+        name,
+        emailAddress
+      };
+
+      return customerInfo;
+    }
   }
 }
