@@ -1647,5 +1647,36 @@ namespace Chapter_9 {
     const value = (orderId: OrderId): string => {
       return orderId.value;
     };
+
+    /** 9.2
+     * deriving an implementation from the type of a function
+     */
+
+    const validateOrder = (checkProductCodeExists: CheckProductCodeExists) => (
+      checkAddressExists: CheckAddressExists
+    ) => (unvalidatedOrder: UnvalidatedOrder): Result<ValidatedOrder, ValidationError[]> => {
+      // ...
+    };
+
+    type Param1 = any;
+    type Param2 = any;
+    type Param3 = any;
+    type MyFunctionSignature = (param1: Param1) => (param2: Param2) => (param3: Param3) => Result;
+
+    // このシグネチャを使って関数を実装する
+    const myFunc: MyFunctionSignature = (param1) => (param2) => (param3) => {
+      // ...
+    }
+
+    // この手法を使ってvalidateOrder関数を実装すると以下のようになる
+    const validateOrder: ValidateOrder = (
+      checkProductCodeExists: CheckProductCodeExists // 依存関係
+    ) => (
+      checkAddressExists: CheckAddressExists // 依存関係
+    ) => (
+      unvalidatedOrder: UnvalidatedOrder // 入力
+    ) => {
+      // ...
+    }
   }
 }
