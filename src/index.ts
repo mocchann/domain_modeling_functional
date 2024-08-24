@@ -1724,7 +1724,7 @@ namespace Chapter_9 {
 
       const customerInfo: CustomerInfo = toCustomerInfo(unvalidatedOrder.customerInfo); // ヘルパー関数(toCustomerInfo)
 
-      const shippingAddress: ShippingAddress = toAddress(unvalidatedOrder.shippingAddress); // ヘルパー関数(toAddress)
+      const shippingAddress: ShippingAddress = toAddress(checkAddressExists)(unvalidatedOrder.shippingAddress); // ヘルパー関数(toAddress)
 
       // すべてのフィールドの準備ができたら、それらを使って新しい「検証済みの注文」レコードを作成し返す
       return {
@@ -1755,6 +1755,42 @@ namespace Chapter_9 {
       };
 
       return customerInfo;
+    }
+
+    /** 9.3.1
+     * Creation of a prize-checked address
+     */
+
+    // toAddress関数はもう少し複雑で、CheckAddressExists<アドレスの存在チェック>サービスを使用して住所が存在するかどうかもチェックする必要がある
+
+    const toAddress = (
+      checkAddressExists: CheckAddressExists
+    ) => (
+      unvalidatedAddress: UnvalidatedAddress
+    ): Address => {
+      // リモートサービスを呼び出す
+      const checkedAddress = checkAddressExists(unvalidatedAddress);
+
+      // パターンマッチを使用して内部値を抽出する
+      const { address: checkAddress } = checkedAddress;
+
+      const addressLine1 = create(checkAddress.addressLine1);
+      const addressLine2 = createOption(checkAddress.addressLine2); // 入力にnullまたは空を指定でき、その場合はNoneを返す
+      const addressLine3 = createOption(checkAddress.addressLine3);
+      const addressLine4 = createOption(checkAddress.addressLine4);
+      const city = create(checkAddress.city);
+      const zipCode = create(checkAddress.zipCode);
+
+      const address: Address = {
+        addressLine1,
+        addressLine2?,
+        addressLine3?,
+        addressLine4?,
+        city,
+        zipCode,
+      };
+
+      return address;
     }
   }
 }
