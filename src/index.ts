@@ -1684,7 +1684,7 @@ namespace Chapter_9 {
      */
 
     // 前章では以下のように型定義をしていた
-    type CheckProductCodeExists = (
+    type CheckAddressExists = (
       unvalidatedAddress: UnvalidatedAddress
     ) => AsyncResult<CheckedAddress, AddressValidationError>;
 
@@ -1792,5 +1792,77 @@ namespace Chapter_9 {
 
       return address;
     }
+
+    /** 9.3.2
+     * Creation of statement lines
+     */
+
+    // UnvalidatedOrderLine<未検証の注文明細行>をValidatedOrderLine<検証済みの注文明細行>に変換する関数を作成する
+    const toValidatedOrderLine = (
+      checkProductCodeExists: CheckProductCodeExists
+    ) => (
+      unvalidatedOrderLine: UnvalidatedOrderLine
+    ): ValidatedOrderLine => {
+      const orderLineId = create(unvalidatedOrderLine.orderLineId);
+      const productCode = toProductCode(unvalidatedOrderLine.productCode); // ヘルパー関数(toProductCode)
+      const quantity = toOrderQuantity(unvalidatedOrderLine.quantity); // ヘルパー関数(toOrderQuantity)
+
+      const validatedOrderLine: ValidatedOrderLine = {
+        orderLineId,
+        productCode,
+        quantity,
+      };
+
+      return validatedOrderLine;
+    }
+
+    // リストの各要素を変換する方法が手に入ったので、ValidatedOrderLinesのリストが得られる = ValidatedOrderに使用できる
+    const validateOrder: ValidateOrder = (
+      checkProductCodeExists: CheckProductCodeExists
+    ) => (
+      checkAddressExists: CheckAddressExists
+    ) => (
+      unvalidatedOrder: UnvalidatedOrder
+    ): ValidatedOrder => {
+      const orderId: OrderId = create(unvalidatedOrder.orderId);
+
+      const customerInfo: CustomerInfo = toCustomerInfo(unvalidatedOrder.customerInfo); // ヘルパー関数(toCustomerInfo)
+
+      const shippingAddress: ShippingAddress = toAddress(checkAddressExists)(unvalidatedOrder.shippingAddress); // ヘルパー関数(toAddress)
+
+      // 追加
+      const orderLines = unvalidatedOrder.orderLines.map(toValidatedOrderLine(checkProductCodeExists)); // ヘルパー関数(toValidatedOrderLine)
+
+      return {
+        orderId,
+        customerInfo,
+        shippingAddress,
+        orderLines,
+        // billingAddress,
+      }
+    };
+
+    // toOrderQuantity、入力はUnvalidatedOrderLineから来る未検証の生の10進数、出力(OrderQuantity<注文数量>)はケースごとに異なる検証をされている選択型
+    const toOrderQuantity = (productCode: ProductCode) => (quantity: number): OrderQuantity => {
+      switch (productCode.type) {
+        case "Widget":
+          const unitQuantity = createUnitQuantity(quantity);
+          return createOrderQuantity(unitQuantity);
+        case "Gizmo":
+          const kilogramQuantity = createKilogramQuantity(quantity);
+          return createOrderQuantity(kilogramQuantity);
+        default:
+          throw new Error("Unknown product code");
+      }
+    }
+
+    const toProductCode = (checkProductCodeExists: CheckProductCodeExists) => (productCode: string): boolean => {
+      const createdProductCode = createProductCode(productCode);
+      return checkProductCodeExists(createdProductCode); // booleanを返す :( が、本来はProductCodeを返したい
+    }
+
+    /** 9.3.3
+     * Creating function adapters
+     */
   }
 }
