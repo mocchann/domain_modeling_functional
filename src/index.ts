@@ -1864,5 +1864,37 @@ namespace Chapter_9 {
     /** 9.3.3
      * Creating function adapters
      */
+
+    // boolをproductCodeに変換する「アダプタ関数」を作成する
+    const convertToPassthru = (checkProductCodeExists: CheckProductCodeExists) => (productCode: ProductCode) => {
+      if (checkProductCodeExists(productCode)) {
+        return productCode;
+      } else {
+        throw new Error("Invalid product code");
+      }
+    }
+
+    // さらに抽象化するとこうなるらしい
+    const predicateToPassthru = (errorMsg: string) => (f: CheckProductCodeExists) => (x: ProductCode) => {
+      if (f(x)) {
+        return x;
+      } else {
+        throw new Error(errorMsg);
+      }
+    }
+
+    // このアダプタ関数を使用してtoProductCode関数を新しいバージョンに更新する
+    const toProductCode = (
+      checkProductCodeExists: CheckProductCodeExists
+    ) => (
+      productCode: ProductCode
+    ) => {
+      const checkProduct = (productCode: ProductCode): ProductCode | void => {
+        const errorMsg = `Invalid: ${productCode}`;
+        return predicateToPassthru(errorMsg)(checkProductCodeExists)(productCode);
+      }
+      const createdProductCode = createProductCode(productCode);
+      return checkProduct(createdProductCode);
+    }
   }
 }
