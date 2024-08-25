@@ -1622,3 +1622,279 @@ namespace Chapter_8 {
 
   printOption(some(add1(5))); // return "The int is 6"
 }
+
+namespace Chapter_9 {
+  /** 9.1
+   * Dealing with simple types
+   */
+
+  namespace Domain {
+    type OrderId = {
+      readonly value: string;
+    };
+
+    // OrderId生成関数
+    const create = (str: string): OrderId => {
+      if (!str || str.length === 0) {
+        throw new Error("OrderId must not be null or empty");
+      } else if (str.length > 50) {
+        throw new Error("OrderId must not be more than 50 chars");
+      }
+      return { value: str };
+    };
+
+    // OrderIdから値を取得する関数
+    const value = (orderId: OrderId): string => {
+      return orderId.value;
+    };
+
+    /** 9.2
+     * deriving an implementation from the type of a function
+     */
+
+    const validateOrder = (checkProductCodeExists: CheckProductCodeExists) => (
+      checkAddressExists: CheckAddressExists
+    ) => (unvalidatedOrder: UnvalidatedOrder): Result<ValidatedOrder, ValidationError[]> => {
+      // ...
+    };
+
+    type Param1 = any;
+    type Param2 = any;
+    type Param3 = any;
+    type MyFunctionSignature = (param1: Param1) => (param2: Param2) => (param3: Param3) => Result;
+
+    // このシグネチャを使って関数を実装する
+    const myFunc: MyFunctionSignature = (param1) => (param2) => (param3) => {
+      // ...
+    }
+
+    // この手法を使ってvalidateOrder関数を実装すると以下のようになる
+    const validateOrder: ValidateOrder = (
+      checkProductCodeExists: CheckProductCodeExists // 依存関係
+    ) => (
+      checkAddressExists: CheckAddressExists // 依存関係
+    ) => (
+      unvalidatedOrder: UnvalidatedOrder // 入力
+    ) => {
+      // ...
+    }
+
+    /** 9.3
+     * Implementation of verification steps
+     */
+
+    // 前章では以下のように型定義をしていた
+    type CheckAddressExists = (
+      unvalidatedAddress: UnvalidatedAddress
+    ) => AsyncResult<CheckedAddress, AddressValidationError>;
+
+    type ValidateOrder = (
+      checkProductCodeExists: CheckProductCodeExists // 依存関係
+    ) => (
+      checkAddressExists: CheckAddressExists // AsyncResultを返す依存関係
+    ) => (
+      unvalidatedOrder: UnvalidatedOrder // 入力
+    ) => AsyncResult<ValidatedOrder, ValidationError[]>; // 出力
+
+    // 本章ではエフェクトを排除するので、AsyncResultを削除する
+    type CheckAddressExists = (unvalidatedAddress: UnvalidatedAddress) => CheckedAddress;
+
+    type ValidateOrder = (
+      checkProductCodeExists: CheckProductCodeExists
+    ) => (
+      checkAddressExists: CheckAddressExists
+    ) => (
+      unvalidatedOrder: UnvalidatedOrder
+    ) => ValidatedOrder; 
+
+    // 未検証の注文のOrderId<注文ID>文字列を使って、OrderIdドメイン型を作成
+    // 未検証の注文のUnvalidatedCustomerInfo<未検証の顧客情報>フィールドを使って、CustomerInfo<顧客情報>ドメイン型を作成
+    // 未検証の注文のShippingAddress<配送先住所>フィールド、つまりUnvalidatedAddress<未検証の住所>を使って、Address<住所>ドメイン型を作成
+    // BillingAddress<請求先住所>と他のすべてのプロパティについても同様に行う
+    // ValidatedOrderのすべての構成要素が利用位可能になったら、通常の方法でレコードを作成
+
+    const validateOrder: ValidateOrder = (
+      checkProductCodeExists: CheckProductCodeExists
+    ) => (
+      checkAddressExists: CheckAddressExists
+    ) => (
+      unvalidatedOrder: UnvalidatedOrder
+    ): ValidatedOrder => {
+      const orderId: OrderId = create(unvalidatedOrder.orderId);
+
+      const customerInfo: CustomerInfo = toCustomerInfo(unvalidatedOrder.customerInfo); // ヘルパー関数(toCustomerInfo)
+
+      const shippingAddress: ShippingAddress = toAddress(checkAddressExists)(unvalidatedOrder.shippingAddress); // ヘルパー関数(toAddress)
+
+      // すべてのフィールドの準備ができたら、それらを使って新しい「検証済みの注文」レコードを作成し返す
+      return {
+        orderId,
+        customerInfo,
+        shippingAddress,
+        // billingAddress,
+        // Lines = ...
+      }
+    };
+
+    // 注文の構成要素を変換する際にも上記実装とまったく同じアプローチを使用できる
+    // toCustomerInfoの実装において、UnvalidatedCustomerInfoからCustomerInfoを構築している
+
+    const toCustomerInfo = (customer: UnvalidatedCustomerInfo): CustomerInfo => {
+      const firstName: FirstName = create(customer.firstName);
+      const lastName: LastName = create(customer.lastName);
+      const emailAddress: EmailAddress = create(customer.emailAddress);
+
+      const name: PersonalName = {
+        firstName,
+        lastName,
+      };
+
+      const customerInfo: CustomerINfo = {
+        name,
+        emailAddress
+      };
+
+      return customerInfo;
+    }
+
+    /** 9.3.1
+     * Creation of a prize-checked address
+     */
+
+    // toAddress関数はもう少し複雑で、CheckAddressExists<アドレスの存在チェック>サービスを使用して住所が存在するかどうかもチェックする必要がある
+
+    const toAddress = (
+      checkAddressExists: CheckAddressExists
+    ) => (
+      unvalidatedAddress: UnvalidatedAddress
+    ): Address => {
+      // リモートサービスを呼び出す
+      const checkedAddress = checkAddressExists(unvalidatedAddress);
+
+      // パターンマッチを使用して内部値を抽出する
+      const { address: checkAddress } = checkedAddress;
+
+      const addressLine1 = create(checkAddress.addressLine1);
+      const addressLine2 = createOption(checkAddress.addressLine2); // 入力にnullまたは空を指定でき、その場合はNoneを返す
+      const addressLine3 = createOption(checkAddress.addressLine3);
+      const addressLine4 = createOption(checkAddress.addressLine4);
+      const city = create(checkAddress.city);
+      const zipCode = create(checkAddress.zipCode);
+
+      const address: Address = {
+        addressLine1,
+        addressLine2?,
+        addressLine3?,
+        addressLine4?,
+        city,
+        zipCode,
+      };
+
+      return address;
+    }
+
+    /** 9.3.2
+     * Creation of statement lines
+     */
+
+    // UnvalidatedOrderLine<未検証の注文明細行>をValidatedOrderLine<検証済みの注文明細行>に変換する関数を作成する
+    const toValidatedOrderLine = (
+      checkProductCodeExists: CheckProductCodeExists
+    ) => (
+      unvalidatedOrderLine: UnvalidatedOrderLine
+    ): ValidatedOrderLine => {
+      const orderLineId = create(unvalidatedOrderLine.orderLineId);
+      const productCode = toProductCode(unvalidatedOrderLine.productCode); // ヘルパー関数(toProductCode)
+      const quantity = toOrderQuantity(unvalidatedOrderLine.quantity); // ヘルパー関数(toOrderQuantity)
+
+      const validatedOrderLine: ValidatedOrderLine = {
+        orderLineId,
+        productCode,
+        quantity,
+      };
+
+      return validatedOrderLine;
+    }
+
+    // リストの各要素を変換する方法が手に入ったので、ValidatedOrderLinesのリストが得られる = ValidatedOrderに使用できる
+    const validateOrder: ValidateOrder = (
+      checkProductCodeExists: CheckProductCodeExists
+    ) => (
+      checkAddressExists: CheckAddressExists
+    ) => (
+      unvalidatedOrder: UnvalidatedOrder
+    ): ValidatedOrder => {
+      const orderId: OrderId = create(unvalidatedOrder.orderId);
+
+      const customerInfo: CustomerInfo = toCustomerInfo(unvalidatedOrder.customerInfo); // ヘルパー関数(toCustomerInfo)
+
+      const shippingAddress: ShippingAddress = toAddress(checkAddressExists)(unvalidatedOrder.shippingAddress); // ヘルパー関数(toAddress)
+
+      // 追加
+      const orderLines = unvalidatedOrder.orderLines.map(toValidatedOrderLine(checkProductCodeExists)); // ヘルパー関数(toValidatedOrderLine)
+
+      return {
+        orderId,
+        customerInfo,
+        shippingAddress,
+        orderLines,
+        // billingAddress,
+      }
+    };
+
+    // toOrderQuantity、入力はUnvalidatedOrderLineから来る未検証の生の10進数、出力(OrderQuantity<注文数量>)はケースごとに異なる検証をされている選択型
+    const toOrderQuantity = (productCode: ProductCode) => (quantity: number): OrderQuantity => {
+      switch (productCode.type) {
+        case "Widget":
+          const unitQuantity = createUnitQuantity(quantity);
+          return createOrderQuantity(unitQuantity);
+        case "Gizmo":
+          const kilogramQuantity = createKilogramQuantity(quantity);
+          return createOrderQuantity(kilogramQuantity);
+        default:
+          throw new Error("Unknown product code");
+      }
+    }
+
+    const toProductCode = (checkProductCodeExists: CheckProductCodeExists) => (productCode: string): boolean => {
+      const createdProductCode = createProductCode(productCode);
+      return checkProductCodeExists(createdProductCode); // booleanを返す :( が、本来はProductCodeを返したい
+    }
+
+    /** 9.3.3
+     * Creating function adapters
+     */
+
+    // boolをproductCodeに変換する「アダプタ関数」を作成する
+    const convertToPassthru = (checkProductCodeExists: CheckProductCodeExists) => (productCode: ProductCode) => {
+      if (checkProductCodeExists(productCode)) {
+        return productCode;
+      } else {
+        throw new Error("Invalid product code");
+      }
+    }
+
+    // さらに抽象化するとこうなるらしい
+    const predicateToPassthru = (errorMsg: string) => (f: CheckProductCodeExists) => (x: ProductCode) => {
+      if (f(x)) {
+        return x;
+      } else {
+        throw new Error(errorMsg);
+      }
+    }
+
+    // このアダプタ関数を使用してtoProductCode関数を新しいバージョンに更新する
+    const toProductCode = (
+      checkProductCodeExists: CheckProductCodeExists
+    ) => (
+      productCode: ProductCode
+    ) => {
+      const checkProduct = (productCode: ProductCode): ProductCode | void => {
+        const errorMsg = `Invalid: ${productCode}`;
+        return predicateToPassthru(errorMsg)(checkProductCodeExists)(productCode);
+      }
+      const createdProductCode = createProductCode(productCode);
+      return checkProduct(createdProductCode);
+    }
+  }
+}
