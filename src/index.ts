@@ -1897,4 +1897,8 @@ namespace Chapter_9 {
       return checkProduct(createdProductCode);
     }
   }
+
+  /** 9.4
+   * Implementation of remaining steps
+   */
 }
