@@ -2118,4 +2118,50 @@ namespace Chapter_9 {
   /** 9.5
    * Combine the steps of the pipeline into one
    */
+
+  // 各ステップの実装を1本のパイプラインに組み合わせるため、コードは次のようにしたい
+  const placeOrder: PlaceOrderWorkflow = (unvalidatedOrder: UnvalidatedOrder) => {
+    return createEvents(
+      acknowledgeOrder(
+        priceOrder(
+          validateOrder(unvalidatedOrder)
+        )
+      )
+    );
+  };
+
+  // しかし、上記だとpriceOrderは入力が2つ必要なので、validateOrderの出力(1つ)には接続できない
+  // この問題を解決するために、部分適用を使用する
+  const validateOrderWithDependenciesBakedIn = validateOrder(checkProductCodeExists, checkAddressExists);
+
+  // これでpriceOrderにvalidateOrderの出力を渡すことができる
+  const placeOrder: PlaceOrderWorkflow = () => {
+    const validateOrder = validateOrder(checkProductCodeExists, checkAddressExists);
+    const priceOrder = priceOrder(getProductPrice);
+    const acknowledgeOrder = acknowledgeOrder(createOrderAcknowledgmentLetter, sendOrderAcknowledgment);
+
+    // ワークフロー関数を返す
+    return (unvalidatedOrder: UnvalidatedOrder) => {
+      return createEvents(
+        acknowledgeOrder(
+          priceOrder(
+            validateOrder(unvalidatedOrder)
+          )
+        )
+      );
+    } 
+  }
+
+  // まだうまく合成できない関数がある。
+  // acknowledgeOrderの出力は価格が確定した注文ではないため、createEventsの入力と一致しないので以下のようにする
+  const placeOrder: PlaceOrderWorkflow = () => {
+    return (unvalidatedOrder: UnvalidatedOrder) => {
+      const validatedOrder = validateOrder(checkProductCodeExists, checkAddressExists)(unvalidatedOrder);
+      const pricedOrder = priceOrder(getProductPrice)(validatedOrder);
+      const acknowledgmentOption = acknowledgeOrder(createOrderAcknowledmentLetter, sendOrderAcknowledgment)(pricedOrder);
+      const events = createEvents(priceOrder, acknowledgmentOption);
+
+      return events;
+    }
+  }
 }
