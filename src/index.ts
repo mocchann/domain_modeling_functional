@@ -1933,11 +1933,11 @@ namespace Chapter_9 {
     };
 
     return pricedOrder;
-  };
+  }
 
   // パイプラインに多くのステップがあり、それらをまだ実装したくない(実装方法がわからない)ときは
   // 実装されていないメッセージを出して失敗させられる
   const priceOrder: PriceOrder = (getProductPrice) => (validatedOrder) => {
     throw new Error("Not implemented");
-  };
+  }
 }
