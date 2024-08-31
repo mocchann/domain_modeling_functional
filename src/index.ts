@@ -2114,4 +2114,8 @@ namespace Chapter_9 {
       ...event3
     ];
   }
+
+  /** 9.5
+   * Combine the steps of the pipeline into one
+   */
 }
