@@ -1897,4 +1897,77 @@ namespace Chapter_9 {
       return checkProduct(createdProductCode);
     }
   }
+
+  /** 9.4
+   * Implementation of remaining steps
+   */
+
+  // 価格計算ステップの元の設計
+  type PriceOrder = (
+    getProductPrice: GetProductPrice // 依存関係
+  ) => (
+    validatedOrder: ValidatedOrder // 入力
+  ) => Result<PriceOrder, PlaceOrderError>; // 出力
+
+  // 元の設計から一度エフェクトを取り除く
+  type GetProductPrice = (productCode: ProductCode) => Price;
+  type PriceOrder = (
+    getProductPrice: GetProductPrice
+  ) => (
+    validatedOrder: ValidatedOrder
+  ) => PriceOrder;
+
+  // 価格計算ステップの実装
+  // 各明細行をPricedOrderLine<価格計算済みの注文明細行>に変換し、それらを使って新しいPricedOrder<価格計算済みの注文>を構築する
+  const priceOrder: PriceOrder = (getProductPrice) => (validatedOrder) => {
+    const lines = validatedOrder.lines.map(toPricedOrderLine(getProductPrice));
+    const amountToBill = sumPrices(lines.map(line => line.linePrice));
+
+    const pricedOrder: PricedOrder = {
+      orderId: validatedOrder.orderId,
+      custormerInfo: validatedOrder.customerInfo,
+      shippingAddress: validatedOrder.shippingAddress,
+      billingAddress: validatedOrder.billingAddress,
+      lines,
+      amountToBill,
+    };
+
+    return pricedOrder;
+  }
+
+  // パイプラインに多くのステップがあり、それらをまだ実装したくない(実装方法がわからない)ときは
+  // 実装されていないメッセージを出して失敗させられる
+  const priceOrder: PriceOrder = (getProductPrice) => (validatedOrder) => {
+    throw new Error("Not implemented");
+  }
+
+  // 価格リストを合計して請求総額にする
+  // 合計が範囲外の場合は例外を発生させる
+  const sumPrices = (prices: Price[]) => {
+    const total = prices.reduce((total, price) => total + price, 0);
+    return create(total);
+  }
+
+  // 検証済みの注文明細行を価格計算済みの注文明細行に変換する
+  const toPricedOrderLine = (
+    getProductPrice: GetProductPrice
+  ) => (
+    line: ValidatedOrderLine
+  ): PricedOrderLine => {
+    const qty = orderQuantity.value(line.quantity);
+    const price = getProductPrice(line.productCode);
+    const linePrice = price.multiply(price, qty)
+
+    return {
+      orderLineId: line.orderLineId,
+      productCode: line.productCode,
+      quantity: line.quantity,
+      linePrice,
+    };
+  }
+
+  // Priceに数量を掛け合わせられるヘルパー関数
+  const multiply = (p: Price, qty: number): Price => {
+    return create(p * qty);
+  }
 }
