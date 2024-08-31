@@ -2164,4 +2164,8 @@ namespace Chapter_9 {
       return events;
     }
   }
+
+  /** 9.6
+   * Dependencies injection
+   */
 }
