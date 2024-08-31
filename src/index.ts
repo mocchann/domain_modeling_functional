@@ -1940,4 +1940,34 @@ namespace Chapter_9 {
   const priceOrder: PriceOrder = (getProductPrice) => (validatedOrder) => {
     throw new Error("Not implemented");
   }
+
+  // 価格リストを合計して請求総額にする
+  // 合計が範囲外の場合は例外を発生させる
+  const sumPrices = (prices: Price[]) => {
+    const total = prices.reduce((total, price) => total + price, 0);
+    return create(total);
+  }
+
+  // 検証済みの注文明細行を価格計算済みの注文明細行に変換する
+  const toPricedOrderLine = (
+    getProductPrice: GetProductPrice
+  ) => (
+    line: ValidatedOrderLine
+  ): PricedOrderLine => {
+    const qty = orderQuantity.value(line.quantity);
+    const price = getProductPrice(line.productCode);
+    const linePrice = price.multiply(price, qty)
+
+    return {
+      orderLineId: line.orderLineId,
+      productCode: line.productCode,
+      quantity: line.quantity,
+      linePrice,
+    };
+  }
+
+  // Priceに数量を掛け合わせられるヘルパー関数
+  const multiply = (p: Price, qty: number): Price => {
+    return create(p * qty);
+  }
 }
