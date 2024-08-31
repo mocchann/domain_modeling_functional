@@ -1901,4 +1901,43 @@ namespace Chapter_9 {
   /** 9.4
    * Implementation of remaining steps
    */
+
+  // 価格計算ステップの元の設計
+  type PriceOrder = (
+    getProductPrice: GetProductPrice // 依存関係
+  ) => (
+    validatedOrder: ValidatedOrder // 入力
+  ) => Result<PriceOrder, PlaceOrderError>; // 出力
+
+  // 元の設計から一度エフェクトを取り除く
+  type GetProductPrice = (productCode: ProductCode) => Price;
+  type PriceOrder = (
+    getProductPrice: GetProductPrice
+  ) => (
+    validatedOrder: ValidatedOrder
+  ) => PriceOrder;
+
+  // 価格計算ステップの実装
+  // 各明細行をPricedOrderLine<価格計算済みの注文明細行>に変換し、それらを使って新しいPricedOrder<価格計算済みの注文>を構築する
+  const priceOrder: PriceOrder = (getProductPrice) => (validatedOrder) => {
+    const lines = validatedOrder.lines.map(toPricedOrderLine(getProductPrice));
+    const amountToBill = sumPrices(lines.map(line => line.linePrice));
+
+    const pricedOrder: PricedOrder = {
+      orderId: validatedOrder.orderId,
+      custormerInfo: validatedOrder.customerInfo,
+      shippingAddress: validatedOrder.shippingAddress,
+      billingAddress: validatedOrder.billingAddress,
+      lines,
+      amountToBill,
+    };
+
+    return pricedOrder;
+  };
+
+  // パイプラインに多くのステップがあり、それらをまだ実装したくない(実装方法がわからない)ときは
+  // 実装されていないメッセージを出して失敗させられる
+  const priceOrder: PriceOrder = (getProductPrice) => (validatedOrder) => {
+    throw new Error("Not implemented");
+  };
 }
