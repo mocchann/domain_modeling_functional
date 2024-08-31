@@ -1,3 +1,5 @@
+import { send } from "process";
+
 namespace Chapter_4 {
   /** 4.1.1
    * Type signature
@@ -1969,5 +1971,50 @@ namespace Chapter_9 {
   // Priceに数量を掛け合わせられるヘルパー関数
   const multiply = (p: Price, qty: number): Price => {
     return create(p * qty);
+  }
+
+  /** 9.4.1
+   * Implementation of the confirmation step
+   */
+
+  // エフェクトを削除した確認ステップの設計
+  type HtmlString = { type: "htmlString"; value: string };
+  type CreateOrderAcknowledgmentLetter = (PriceOrder: PriceOrder) => HtmlString;
+  type OrderAcknowledgment = {
+    emailAddress: EmailAddress;
+    letter: HtmlString;
+  }
+  type SendResult = Sent | NotSent;
+  type SendOrderAcknowledgment = (orderAcknowledgment: OrderAcknowledgment) => SendResult;
+
+  type AcknowledgeOrder = (
+    createOrderAcknowledgmentLetter: CreateOrderAcknowledgmentLetter // 依存関係
+  ) => (
+    sendOrderAcknowledgment: SendOrderAcknowledgment // 依存関係
+  ) => (
+    pricedOrder: PricedOrder // 入力
+  ) => OrderAcknowledgmentSent | undefined; // 出力
+
+  // 確認ステップの実装
+  const acknowledgeOrder: AcknowledgeOrder = (createAcknowledgmentLetter) => (sendOrderAcknowledgment) => (pricedOrder) => {
+    const letter = createAcknowledgmentLetter(pricedOrder);
+    const acknowledgment: OrderAcknowledgment = {
+      emailAddress: pricedOrder.customerInfo.emailAddress,
+      letter,
+    };
+
+    // 送信が成功した場合はOrderAcknowledgmentSentを返す
+    // 失敗した場合はNoneを返す
+    const sendResult = sendOrderAcknowledgment(acknowledgment);
+    switch (sendResult) {
+      case "Sent":
+        const event = {
+          orderId: pricedOrder.orderId,
+          emailAddress: pricedOrder.customerInfo.emailAddress,
+        };
+        return { type: "Some", value: event };
+      case "NotSent":
+        return { type: "None" };
+    }
   }
 }
