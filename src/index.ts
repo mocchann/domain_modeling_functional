@@ -2008,7 +2008,7 @@ namespace Chapter_9 {
     const sendResult = sendOrderAcknowledgment(acknowledgment);
     switch (sendResult) {
       case "Sent":
-        const event = {
+        const event: OrderAcknowledgmentSent = {
           orderId: pricedOrder.orderId,
           emailAddress: pricedOrder.customerInfo.emailAddress,
         };
@@ -2016,5 +2016,102 @@ namespace Chapter_9 {
       case "NotSent":
         return { type: "None" };
     }
+  }
+
+  /** 9.4.2
+   * Create events
+   */
+
+  // 配送コンテキストに更新するイベント
+  type OrderPlaced = PricedOrder;
+
+  // 請求コンテキストに送信するイベント
+  // 請求総額が０ではない場合にのみ作成される
+  type BillableOrderPlaced = {
+    orderid: OrderId;
+    billingAddress: Address;
+    amountToBill: BillingAmount;
+  };
+
+  type PlaceOrderEvent =
+  | { type: "orderPlaced"; orderPlaced: OrderPlaced }
+  | { type: "billableOrderPlaced"; billableOrderPlaced: BillableOrderPlaced }
+  | { type: "orderAcknowledgmentSent"; orderAcknowledgmentSent: OrderAcknowledgmentSent };
+
+  type CreateEvents = (
+    pricedOrder: PricedOrder // 入力
+  ) => (
+    orderAcknowledgmentSent?: OrderAcknowledgmentSent // 入力(前のステップのイベント)
+  ) =>  PlaceOrderEvent[]; // 出力
+
+  const createBillingEvent = (pricedOrder: PricedOrder) => (billableOrderPlaced?: BillableOrderPlaced) => {
+    const BillingAmount = billingAmount.value(pricedOrder.amountToBill);
+    if (BillingAmount > 0) {
+      const order = {
+        orderId: pricedOrder.orderId,
+        billingAddress: pricedOrder.billingAddress,
+        amountToBill: pricedOrder.amountToBill,
+      };
+      return { type: "Some", value: order };
+    }
+    return { type: "None" };
+  }
+
+  const createEvents: CreateEvents = (pricedOrder) => (acknowledgmentEventOpt) => {
+    const event1: PlaceOrderEvent = {
+      type: "orderPlaced",
+      orderPlaced: pricedOrder,
+    };
+
+    const event20pt = acknowledgmentEventOpt
+    ? { type: "orderAcknowledgmentSent", orderAcknowledgmentSent: acknowledgmentEventOpt }
+    : undefined;
+
+    const event30pt = (() => {
+      const billingEvent = createBillingEvent(pricedOrder)();
+      if (billingEvent.type === "Some") {
+        return { type: "billableOrderPlaced", billableOrderPlaced: billingEvent.value };
+      }
+      return undefined;
+    })();
+  }
+
+  // オプション型をリスト型に変換するヘルパー関数
+  const listOfOption = (opt: Option<PlaceOrderEvent>): PlaceOrderEvent[] => {
+    switch (opt.type) {
+      case "Some":
+        return [opt.value];
+      case "None":
+        return [];
+    }
+  }
+
+  // これで3つのイベント型はすべて同じになり、別のリストに入れて返せる
+  const createEvents: CreateEvents = (pricedOrder) => (acknowledgmentEventOpt) => {
+    const event: PlaceOrderEvent = {
+      type: "orderPlaced",
+      orderPlaced: pricedOrder,
+    };
+    const event1 = listOfOption(event);
+
+    const event20pt = acknowledgmentEventOpt
+    ? { type: "orderAcknowledgmentSent", orderAcknowledgmentSent: acknowledgmentEventOpt }
+    : undefined;
+    const event2 = listOfOption(event20pt);
+
+    const event30pt = (() => {
+      const billingEvent = createBillingEvent(pricedOrder)();
+      if (billingEvent.type === "Some") {
+        return { type: "billableOrderPlaced", billableOrderPlaced: billingEvent.value };
+      }
+      return undefined;
+    })();
+    const event3 = listOfOption(event30pt);
+
+    return [
+      ...event1,
+      ...event2,
+      ...event3
+    ];
   }
 }
