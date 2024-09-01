@@ -2168,4 +2168,48 @@ namespace Chapter_9 {
   /** 9.6
    * Dependencies injection
    */
+
+  // 依存関係の注入はすべての依存関係をトップレベルの関数に渡し、さらにその関数が内部に関数を渡すようにする
+  const toValidatedOrderLine = (
+    checkProductCodeExists: CheckProductCodeExists
+  ) => (
+    unvalidatedOrderLine: UnvalidatedOrderLine
+  ): ValidatedOrderLine => {
+    const orderLineId = create(unvalidatedOrderLine.orderLineId);
+    const productCode = toProductCode(checkProductCodeExists)(unvalidatedOrderLine.productCode);
+    // ...
+  }
+
+  // validateOrder関数は、toAddress、toValidatedOrderLineを両方使うので、依存関係を渡す
+  const validateOrder: ValidateOrder = (checkProductCodeExists, checkAddressExists, unvalidatedOrder) => {
+    const orderId: OrderId = create(unvalidatedOrder.orderId);
+
+    const customerInfo: CustomerInfo = toCustomerInfo(unvalidatedOrder.customerInfo); // ヘルパー関数(toCustomerInfo)
+
+    const shippingAddress: ShippingAddress = toAddress(checkAddressExists)(unvalidatedOrder.shippingAddress); // ヘルパー関数(toAddress)
+
+    const orderLines = unvalidatedOrder.orderLines.map(toValidatedOrderLine(checkProductCodeExists)); // ヘルパー関数(toValidatedOrderLine)
+
+    return {
+      orderId,
+      customerInfo,
+      shippingAddress,
+      orderLines,
+      // billingAddress,
+    }
+  };
+
+  // サービスをセットアップするには構成情報へのアクセスが必要になるため、placeOrderをコンポジションルートにするべきではない
+  // それよりもplaceOrderワークフロー自体も、必要なサービスをパタメータとして受け取る方が良い
+  const placeOrder = (
+    checkProductCodeExists,
+    checkAddressExists,
+    getProductPrice,
+    createOrderAcknowledgmentLetter,
+    sendOrderAcknowledgment
+  ): PlaceOrderWorkflow => {
+    return (unvalidatedOrder: UnvalidatedOrder) => {
+      // ...
+    }
+  }
 }
