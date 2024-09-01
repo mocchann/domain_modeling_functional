@@ -2212,4 +2212,67 @@ namespace Chapter_9 {
       // ...
     }
   }
+
+  /** 9.6.1
+   * Too many dependencies?
+   */
+
+  // 依存関係が爆発的に増える可能性もある
+  // checkAddressExists関数はURIエンドポイントと認証情報を必要とするWebサービスと通信しているとする例
+  const checkAddressExists = (
+    endPoint: EndPoint,
+    credentials: Credentials,
+    unvalidatedAddress: UnvalidatedAddress
+  ) => {
+    // ...
+  }
+
+  // この場合、checkAddressExists関数を使用するtoAddress関数にもこれらの依存関係を渡す必要がある
+  const toAddress = (
+    checkAddressExists: CheckAddressExists,
+    endPoint: EndPoint,
+    credentials: Credentials,
+    unvalidatedAddress: UnvalidatedAddress
+  ) => {
+    const checkAddress = checkAddressExists(endPoint, credentials, unvalidatedAddress);
+    // ...
+  }
+
+  // そしてこれが最上位の関数まで続くことになる
+  const validateOrder = (
+    checkProductCodeExists,
+    checkAddressExists,
+    endPoint, // checkAddressExistsのみで必要
+    credentials, // checkAddressExistsのみで必要
+    unvalidatedOrder
+  ) => {
+    // ...
+  }
+
+  // これは望ましくない。中間関数はcheckAddressExists関数の依存関係をすべて知る必要はないはず。
+  // もっと良い方法は、低レベルの関数をトップレベル関数の外側で設定し、すべての依存関係が組み込み済みの子関数を渡すこと
+  const placeOrder: PlaceOrderWorkflow = () => {
+    const endPoint = "http://example.com";
+    const credentials = "secret";
+
+    // 認証情報を組み込んだcheckAddressExists関数を作成
+    const checkAddressExists = (endPoint, credentials) => {
+      const checkAddressExists = (endPoint, credentials, unvalidatedAddress) => {
+        // ...etc
+      }
+      return checkAddressExists;
+    }
+
+    // etc
+
+    const validateOrder = validateOrder(checkProductCodeExists, checkAddressExists, unvalidatedOrder);
+
+    // etc
+
+    return (unvalidatedOrder: UnvalidatedOrder) => {
+      // ステップからパイプラインを合成する
+      // ...
+    } 
+  }
+  // 組み立て済みのヘルパー関数を渡してパラメータを減らすアプローチは複雑さを隠すのに役立つ一般的なテクニック
 }
