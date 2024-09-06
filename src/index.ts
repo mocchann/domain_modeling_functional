@@ -1,5 +1,3 @@
-import { send } from "process";
-
 namespace Chapter_4 {
   /** 4.1.1
    * Type signature
