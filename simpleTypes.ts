@@ -3,6 +3,13 @@ type WidgetCode = { type: "widgetCode"; widgetCode: string };
 type GizmoCode = { type: "gizmoCode"; gizmoCode: string };
 // 制約: 先頭が"G" + 数字4桁
 export type ProductCode = WidgetCode | GizmoCode;
+// 注文数量関連
+type UnitOrderQuantity = { type: "unitQuantity"; unitQuantity: number };
+type KilogramOrderQuantity = {
+  type: "kilogramQuantity";
+  kilogramQuantity: number;
+};
+export type OrderQuantity = UnitOrderQuantity | KilogramOrderQuantity;
 
 export type UnvalidatedCustomerInfo = {
   firstName: FirstName;

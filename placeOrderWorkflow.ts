@@ -9,6 +9,7 @@ import {
   FirstName,
   LastName,
   OrderId,
+  OrderQuantity,
   PersonalName,
   Price,
   ProductCode,
@@ -131,6 +132,43 @@ export const PlaceOrderWorkflow = () => {
         return address;
       } else {
         throw new Error(checkedAddress.error.error);
+      }
+    };
+
+  const predicateToPassthru =
+    (errorMsg: string) => (f: CheckProductCodeExists) => (x: ProductCode) => {
+      if (f(x)) {
+        return x;
+      } else {
+        throw new Error(errorMsg);
+      }
+    };
+
+  const toProductCode =
+    (checkProductCodeExists: CheckProductCodeExists) =>
+    (productCode: ProductCode) => {
+      const checkProduct = (productCode: ProductCode): ProductCode | void => {
+        const errorMsg = `Invalid: ${productCode}`;
+        return predicateToPassthru(errorMsg)(checkProductCodeExists)(
+          productCode
+        );
+      };
+      const createdProductCode = createProductCode(productCode);
+      return checkProduct(createdProductCode);
+    };
+
+  const toOrderQuantity =
+    (productCode: ProductCode) =>
+    (quantity: number): OrderQuantity => {
+      switch (productCode.type) {
+        case "widgetCode":
+          const unitQuantity = createUnitQuantity(quantity);
+          return createOrderQuantity(unitQuantity);
+        case "gizmoCode":
+          const kilogramQuantity = createKilogramQuantity(quantity);
+          return createOrderQuantity(kilogramQuantity);
+        default:
+          throw new Error("Unknown product code");
       }
     };
 };
