@@ -147,7 +147,7 @@ export const PlaceOrderWorkflow = () => {
   const toProductCode =
     (checkProductCodeExists: CheckProductCodeExists) =>
     (productCode: ProductCode) => {
-      const checkProduct = (productCode: ProductCode): ProductCode | void => {
+      const checkProduct = (productCode: ProductCode): ProductCode => {
         const errorMsg = `Invalid: ${productCode}`;
         return predicateToPassthru(errorMsg)(checkProductCodeExists)(
           productCode
@@ -159,7 +159,7 @@ export const PlaceOrderWorkflow = () => {
 
   const toOrderQuantity =
     (productCode: ProductCode) =>
-    (quantity: number): OrderQuantity => {
+    (quantity: OrderQuantity): OrderQuantity => {
       switch (productCode.type) {
         case "widgetCode":
           const unitQuantity = createUnitQuantity(quantity);
@@ -170,5 +170,25 @@ export const PlaceOrderWorkflow = () => {
         default:
           throw new Error("Unknown product code");
       }
+    };
+
+  const toValidatedOrderLine =
+    (checkProductCodeExists: CheckProductCodeExists) =>
+    (unvalidatedOrderLine: UnvalidatedOrderLine): ValidatedOrderLine => {
+      const orderLineId = create(unvalidatedOrderLine.orderLineId);
+      const productCode = toProductCode(checkProductCodeExists)(
+        unvalidatedOrderLine.productCode
+      ); // ヘルパー関数(toProductCode)
+      const quantity = toOrderQuantity(productCode)(
+        unvalidatedOrderLine.quantity
+      ); // ヘルパー関数(toOrderQuantity)
+
+      const validatedOrderLine: ValidatedOrderLine = {
+        orderLineId,
+        productCode,
+        quantity,
+      };
+
+      return validatedOrderLine;
     };
 };

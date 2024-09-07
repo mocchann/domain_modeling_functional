@@ -19,7 +19,11 @@ export type UnvalidatedCustomerInfo = {
 };
 export type UnvalidatedShippingAddress = undefined;
 export type UnvalidatedBillingAddress = undefined;
-export type UnvalidatedOrderLine = undefined;
+export type UnvalidatedOrderLine = {
+  orderLineId: string;
+  productCode: ProductCode;
+  quantity: OrderQuantity;
+};
 export type UnvalidatedAmountToBill = undefined;
 
 export type OrderId = {
@@ -46,7 +50,11 @@ export type CustomerInfo = {
   name: PersonalName;
   emailAddress: EmailAddress;
 };
-export type ValidatedOrderLine = undefined;
+export type ValidatedOrderLine = {
+  orderLineId: string;
+  productCode: ProductCode;
+  quantity: OrderQuantity;
+};
 
 export type Price = undefined;
 
