@@ -211,25 +211,22 @@ export const PlaceOrderWorkflow = () => {
       checkAddressExists
     )(unvalidatedOrder.shippingAddress);
 
-    const orderLines = unvalidatedOrder.orderLines.map(
-      toValidatedOrderLine(checkProductCodeExists)
-    );
-
     const billingAddress: BillingAddress = await toAddress(checkAddressExists)(
       unvalidatedOrder.billingAddress
     );
 
-    const lines = unvalidatedOrder.orderLines.map(
+    const orderLines = unvalidatedOrder.orderLines.map(
       toValidatedOrderLine(checkProductCodeExists)
     );
 
-    return {
+    const validatedOrder: ValidatedOrder = {
       orderId,
       customerInfo,
       shippingAddress,
-      orderLines,
       billingAddress,
-      lines,
+      orderLines,
     };
+
+    return validatedOrder;
   };
 };
