@@ -5,7 +5,11 @@
 import {
   Address,
   CustomerInfo,
+  EmailAddress,
+  FirstName,
+  LastName,
   OrderId,
+  PersonalName,
   Price,
   ProductCode,
   UnvalidatedAmountToBill,
@@ -17,7 +21,12 @@ import {
 } from "./simpleTypes";
 
 export const PlaceOrderWorkflow = () => {
+  // ====================
+  // パート1: 設計
+  // ====================
+
   // ----- 注文の検証 -----
+
   type CheckProductCodeExists = (productCode: ProductCode) => boolean;
   type CheckedAddress = { type: "checkedAddress"; unvalidatedAddress: string };
   type CheckAddressExists = (unvalidatedAddress: string) => CheckedAddress;
@@ -46,5 +55,39 @@ export const PlaceOrderWorkflow = () => {
   ) => (unvalidatedOrder: UnvalidatedOrder) => ValidatedOrder; // 入力 => 出力
 
   // ----- 注文の価格決定 -----
+
   type GetProductPrice = (productCode: ProductCode) => Price;
+  type PriceOrder = (
+    getProductPrice: GetProductPrice
+  ) => (validatedOrder: ValidatedOrder) => PriceOrder;
+
+  // ====================
+  // パート2: 実装
+  // ====================
+
+  // ====================
+  // 注文の検証: 実装
+  // ====================
+
+  const toCustomerInfo = (
+    unvalidatedCustomerInfo: UnvalidatedCustomerInfo
+  ): CustomerInfo => {
+    const firstName: FirstName = create(unvalidatedCustomerInfo.firstName);
+    const lastName: LastName = create(unvalidatedCustomerInfo.lastName);
+    const emailAddress: EmailAddress = create(
+      unvalidatedCustomerInfo.emailAddress
+    );
+
+    const name: PersonalName = {
+      firstName,
+      lastName,
+    };
+
+    const customerInfo: CustomerInfo = {
+      name,
+      emailAddress,
+    };
+
+    return customerInfo;
+  };
 };
