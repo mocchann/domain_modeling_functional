@@ -18,7 +18,23 @@ export type UnvalidatedAmountToBill = undefined;
 export type OrderId = {
   readonly value: string;
 };
-export type Address = undefined;
+export type UnvalidatedAddress = {
+  addressLine1: string;
+  addressLine2?: string;
+  addressLine3?: string;
+  addressLine4?: string;
+  city: string;
+  zipCode: string;
+};
+
+export type Address = {
+  addressLine1: string;
+  addressLine2?: string;
+  addressLine3?: string;
+  addressLine4?: string;
+  city: string;
+  zipCode: string;
+};
 export type CustomerInfo = {
   name: PersonalName;
   emailAddress: EmailAddress;
@@ -28,7 +44,7 @@ export type ValidatedOrderLine = undefined;
 export type Price = undefined;
 
 export type FirstName = string;
-export type MiddleInitial = string | undefined;
+export type MiddleInitial = string;
 export type LastName = string;
 export type PersonalName = {
   firstName: FirstName;

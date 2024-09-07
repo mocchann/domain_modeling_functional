@@ -12,6 +12,7 @@ import {
   PersonalName,
   Price,
   ProductCode,
+  UnvalidatedAddress,
   UnvalidatedAmountToBill,
   UnvalidatedBillingAddress,
   UnvalidatedCustomerInfo,
@@ -28,8 +29,18 @@ export const PlaceOrderWorkflow = () => {
   // ----- 注文の検証 -----
 
   type CheckProductCodeExists = (productCode: ProductCode) => boolean;
-  type CheckedAddress = { type: "checkedAddress"; unvalidatedAddress: string };
-  type CheckAddressExists = (unvalidatedAddress: string) => CheckedAddress;
+  type CheckedAddress = { type: "checkedAddress"; address: Address };
+  type Result<T, E> =
+    | { success: true; value: T }
+    | { success: false; error: E };
+  type AsyncResult<S, F> = Promise<Result<S, F>>;
+  type AddressValidationError = {
+    type: "addressValidationError";
+    error: string;
+  };
+  type CheckAddressExists = (
+    unvalidatedAddress: UnvalidatedAddress
+  ) => AsyncResult<CheckedAddress, AddressValidationError>;
 
   type UnvalidatedOrder = {
     orderId: string;
@@ -90,4 +101,36 @@ export const PlaceOrderWorkflow = () => {
 
     return customerInfo;
   };
+
+  const toAddress =
+    (checkAddressExists: CheckAddressExists) =>
+    async (unvalidatedAddress: UnvalidatedAddress): Promise<Address> => {
+      // リモートサービスを呼び出す
+      const checkedAddress = await checkAddressExists(unvalidatedAddress);
+
+      // パターンマッチを使用して内部値を抽出する
+      if (checkedAddress.success) {
+        const { address: checkAddress } = checkedAddress.value;
+
+        const addressLine1 = create(checkAddress.addressLine1);
+        const addressLine2 = createOption(checkAddress.addressLine2); // 入力にnullまたは空を指定でき、その場合はNoneを返す
+        const addressLine3 = createOption(checkAddress.addressLine3);
+        const addressLine4 = createOption(checkAddress.addressLine4);
+        const city = create(checkAddress.city);
+        const zipCode = create(checkAddress.zipCode);
+
+        const address: Address = {
+          addressLine1,
+          addressLine2,
+          addressLine3,
+          addressLine4,
+          city,
+          zipCode,
+        };
+
+        return address;
+      } else {
+        throw new Error(checkedAddress.error.error);
+      }
+    };
 };

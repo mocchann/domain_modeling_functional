@@ -1,5 +1,3 @@
-import { describe, mock } from "node:test";
-
 namespace Chapter_4 {
   /** 4.1.1
    * Type signature
