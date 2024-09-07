@@ -1,3 +1,5 @@
+import { describe, mock } from "node:test";
+
 namespace Chapter_4 {
   /** 4.1.1
    * Type signature
@@ -2277,5 +2279,43 @@ namespace Chapter_9 {
   /** 9.7
    * Testing dependencies
    */
+
+  describe("依存関係のテスト", () => {
+    test("製品が存在する場合は、検証に成功する", () => {
+      const checkAddressExists = jest.spyOn(
+        checkAddressExists, "checkAddressExists"
+      ).mockImplementationOnce(
+        () => checkAddress // 成功
+      );
+      const checkProductCodeExists = jest.spyOn(
+        checkProductCodeExists, "checkProductCodeExists"
+      ).mockImplementationOnce(
+        () => true // 成功
+      );
+      const unvalidatedOrder = "..."; // 入力の設定
+  
+      const result = validateOrder(checkProductCodeExists, checkAddressExists, unvalidatedOrder); // 実行
+  
+      expect(result).toBe("..."); // 検証
+    });
+
+    test("製品が存在しない場合は、検証に失敗する", () => {
+      const checkAddressExists = jest.spyOn(
+        checkAddressExists, "checkAddressExists"
+      ).mockImplementationOnce(
+        () => checkAddress // 成功
+      );
+      const checkProductCodeExists = jest.spyOn(
+        checkProductCodeExists, "checkProductCodeExists"
+      ).mockImplementationOnce(
+        () => false // 失敗
+      );
+      const unvalidatedOrder = "..."; // 入力の設定
+  
+      const result = validateOrder(checkProductCodeExists, checkAddressExists, unvalidatedOrder); // 実行
+  
+      expect(result).toBe("..."); // 検証
+    });
+  });
 
 }
