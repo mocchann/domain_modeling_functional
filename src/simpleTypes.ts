@@ -17,8 +17,8 @@ export type UnvalidatedCustomerInfo = {
   lastName: LastName;
   emailAddress: EmailAddress;
 };
-export type UnvalidatedShippingAddress = undefined;
-export type UnvalidatedBillingAddress = undefined;
+export type UnvalidatedShippingAddress = UnvalidatedAddress;
+export type UnvalidatedBillingAddress = UnvalidatedAddress;
 export type UnvalidatedOrderLine = {
   orderLineId: string;
   productCode: ProductCode;
@@ -46,6 +46,8 @@ export type Address = {
   city: string;
   zipCode: string;
 };
+export type ShippingAddress = Address;
+export type BillingAddress = Address;
 export type CustomerInfo = {
   name: PersonalName;
   emailAddress: EmailAddress;

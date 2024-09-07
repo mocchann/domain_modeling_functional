@@ -4,6 +4,7 @@
 
 import {
   Address,
+  BillingAddress,
   CustomerInfo,
   EmailAddress,
   FirstName,
@@ -13,6 +14,7 @@ import {
   PersonalName,
   Price,
   ProductCode,
+  ShippingAddress,
   UnvalidatedAddress,
   UnvalidatedAmountToBill,
   UnvalidatedBillingAddress,
@@ -191,4 +193,43 @@ export const PlaceOrderWorkflow = () => {
 
       return validatedOrderLine;
     };
+
+  /// 注文の検証ステップの実装
+
+  const validateOrder: ValidateOrder = async (
+    checkProductCodeExists: CheckProductCodeExists,
+    checkAddressExists: CheckAddressExists,
+    unvalidatedOrder: UnvalidatedOrder
+  ) => {
+    const orderId: OrderId = create(unvalidatedOrder.orderId);
+
+    const customerInfo: CustomerInfo = toCustomerInfo(
+      unvalidatedOrder.customerInfo
+    );
+
+    const shippingAddress: ShippingAddress = await toAddress(
+      checkAddressExists
+    )(unvalidatedOrder.shippingAddress);
+
+    const orderLines = unvalidatedOrder.orderLines.map(
+      toValidatedOrderLine(checkProductCodeExists)
+    );
+
+    const billingAddress: BillingAddress = await toAddress(checkAddressExists)(
+      unvalidatedOrder.billingAddress
+    );
+
+    const lines = unvalidatedOrder.orderLines.map(
+      toValidatedOrderLine(checkProductCodeExists)
+    );
+
+    return {
+      orderId,
+      customerInfo,
+      shippingAddress,
+      orderLines,
+      billingAddress,
+      lines,
+    };
+  };
 };
