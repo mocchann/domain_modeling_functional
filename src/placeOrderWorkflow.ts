@@ -87,6 +87,12 @@ export const PlaceOrderWorkflow = () => {
         type: "orderAcknowledgmentSent";
         acknowledgmentSent: OrderAcknowledgmentSent;
       };
+  type Command<Data> = {
+    data: Data;
+    timestamp: Date;
+    userId: string;
+    // etc
+  };
 
   // ====================
   // パート2: 実装
