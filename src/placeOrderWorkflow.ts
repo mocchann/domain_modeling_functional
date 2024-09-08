@@ -435,27 +435,33 @@ export const PlaceOrderWorkflow = () => {
         type: "orderPlaced",
         orderPlaced: pricedOrder,
       };
-      const event1 = listOfOption(event);
+      const event1 = listOfOption({ type: "Some", value: event });
 
       const event20pt = acknowledgmentEventOpt
         ? {
-            type: "orderAcknowledgmentSent",
-            orderAcknowledgmentSent: acknowledgmentEventOpt,
+            type: "orderAcknowledgmentSent" as const,
+            acknowledgmentSent: acknowledgmentEventOpt,
           }
         : undefined;
-      const event2 = listOfOption(event20pt);
+
+      const event2 = event20pt
+        ? listOfOption({ type: "Some", value: event20pt })
+        : [];
 
       const event30pt = (() => {
         const billingEvent = createBillingEvent(pricedOrder)();
         if (billingEvent.type === "Some") {
           return {
-            type: "billableOrderPlaced",
+            type: "billableOrderPlaced" as const,
             billableOrderPlaced: billingEvent.value,
           };
         }
         return undefined;
       })();
-      const event3 = listOfOption(event30pt);
+
+      const event3 = event30pt
+        ? listOfOption({ type: "Some", value: event30pt })
+        : [];
 
       return [...event1, ...event2, ...event3];
     };
