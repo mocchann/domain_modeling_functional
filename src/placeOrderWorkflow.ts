@@ -336,7 +336,7 @@ export const PlaceOrderWorkflow = () => {
   const toPricedOrderLine =
     (getProductPrice: GetProductPrice) =>
     (line: ValidatedOrderLine): PricedOrderLine => {
-      const qty = value(line.quantity);
+      const qty = line.quantity;
       const price = getProductPrice(line.productCode);
       const linePrice = multiply(price, qty);
 
@@ -352,7 +352,7 @@ export const PlaceOrderWorkflow = () => {
   // 合計が範囲外の場合は例外を発生させる
   const sumPrices = (prices: Price[]) => {
     const total = prices.reduce((total, price) => total + price, 0);
-    return create(total);
+    return total;
   };
 
   // 価格計算ステップの実装
