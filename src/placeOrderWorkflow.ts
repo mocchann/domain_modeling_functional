@@ -326,8 +326,10 @@ export const PlaceOrderWorkflow = () => {
     };
 
   // Priceに数量を掛け合わせられるヘルパー関数
-  const multiply = (p: Price, qty: number): Price => {
-    return create(p * qty);
+  const multiply = (p: Price, qty: OrderQuantity): Price => {
+    return qty.type === "unitQuantity"
+      ? p * qty.unitQuantity
+      : p * qty.kilogramQuantity;
   };
 
   // 検証済みの注文明細行を価格計算済みの注文明細行に変換する
