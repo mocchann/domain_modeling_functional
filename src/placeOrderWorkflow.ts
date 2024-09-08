@@ -80,6 +80,14 @@ export const PlaceOrderWorkflow = () => {
     getProductPrice: GetProductPrice
   ) => (validatedOrder: ValidatedOrder) => PricedOrder;
 
+  type PlaceOrderEvent =
+    | { type: "orderPlaced"; orderPlaced: OrderPlaced }
+    | { type: "billableOrderPlaced"; billableOrderPlaced: BillableOrderPlaced }
+    | {
+        type: "orderAcknowledgmentSent";
+        acknowledgmentSent: OrderAcknowledgmentSent;
+      };
+
   // ====================
   // パート2: 実装
   // ====================
