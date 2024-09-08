@@ -93,6 +93,7 @@ export const PlaceOrderWorkflow = () => {
     userId: string;
     // etc
   };
+  type PlaceOrderCommand = Command<UnvalidatedOrder>;
 
   // ====================
   // パート2: 実装
