@@ -73,6 +73,9 @@ export const PlaceOrderWorkflow = () => {
   // ----- 注文の価格決定 -----
 
   type GetProductPrice = (productCode: ProductCode) => Price;
+  type CreateOrderAcknowledgmentLetter = (
+    pricedOrder: PricedOrder
+  ) => HtmlString;
   type PriceOrder = (
     getProductPrice: GetProductPrice
   ) => (validatedOrder: ValidatedOrder) => PriceOrder;
