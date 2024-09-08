@@ -476,17 +476,12 @@ export const PlaceOrderWorkflow = () => {
     (getProductPrice: GetProductPrice) =>
     (createOrderAcknowledgmentLetter: CreateOrderAcknowledgmentLetter) =>
     (sendOrderAcknowledgment: SendOrderAcknowledgment): PlaceOrderWorkflow => {
-      return async (unvalidatedOrder: UnvalidatedOrder) => {
+      return async (placeOrderCommand: PlaceOrderCommand) => {
         const validatedOrder = await validateOrder(checkProductCodeExists)(
           checkAddressExists
-        )(unvalidatedOrder);
+        )(placeOrderCommand.data);
 
         const pricedOrder = priceOrder(getProductPrice)(validatedOrder);
-
-        const orderAcknowledgmentLetter =
-          createOrderAcknowledgmentLetter(pricedOrder);
-
-        await sendOrderAcknowledgment(orderAcknowledgmentLetter);
 
         const acknowledgmentOption = acknowledgeOrder(
           createOrderAcknowledgmentLetter
@@ -494,7 +489,7 @@ export const PlaceOrderWorkflow = () => {
 
         const events = createEvents(pricedOrder)(acknowledgmentOption);
 
-        return events;
+        return { success: true, value: events };
       };
     };
 };
