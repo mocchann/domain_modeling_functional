@@ -365,4 +365,14 @@ export const PlaceOrderWorkflow = () => {
       }
     };
 
+  // オプション型をリスト型に変換するヘルパー関数
+  const listOfOption = (opt: Option<PlaceOrderEvent>): PlaceOrderEvent[] => {
+    switch (opt.type) {
+      case "Some":
+        return [opt.value];
+      case "None":
+        return [];
+    }
+  };
+
 };
