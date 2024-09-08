@@ -400,12 +400,17 @@ export const PlaceOrderWorkflow = () => {
       }
     };
 
+  type Some<T> = { type: "Some"; value: T };
+  type None = { type: "None" };
+  type Option<T> = Some<T> | None;
   // オプション型をリスト型に変換するヘルパー関数
-  const listOfOption = (opt: Option<PlaceOrderEvent>): PlaceOrderEvent[] => {
-    switch (opt.type) {
+  const listOfOption = (opt?: Option<PlaceOrderEvent>): PlaceOrderEvent[] => {
+    switch (opt?.type) {
       case "Some":
         return [opt.value];
       case "None":
+        return [];
+      default:
         return [];
     }
   };
