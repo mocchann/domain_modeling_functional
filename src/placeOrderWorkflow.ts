@@ -313,4 +313,11 @@ export const PlaceOrderWorkflow = () => {
       };
     };
 
+  // 価格リストを合計して請求総額にする
+  // 合計が範囲外の場合は例外を発生させる
+  const sumPrices = (prices: Price[]) => {
+    const total = prices.reduce((total, price) => total + price, 0);
+    return create(total);
+  };
+
 };
