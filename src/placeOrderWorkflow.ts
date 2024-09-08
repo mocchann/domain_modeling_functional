@@ -296,4 +296,21 @@ export const PlaceOrderWorkflow = () => {
   const multiply = (p: Price, qty: number): Price => {
     return create(p * qty);
   };
+
+  // 検証済みの注文明細行を価格計算済みの注文明細行に変換する
+  const toPricedOrderLine =
+    (getProductPrice: GetProductPrice) =>
+    (line: ValidatedOrderLine): PricedOrderLine => {
+      const qty = value(line.quantity);
+      const price = getProductPrice(line.productCode);
+      const linePrice = multiply(price, qty);
+
+      return {
+        orderLineId: line.orderLineId,
+        productCode: line.productCode,
+        quantity: line.quantity,
+        linePrice,
+      };
+    };
+
 };
