@@ -10,6 +10,7 @@ import {
   FirstName,
   HtmlString,
   LastName,
+  OrderAcknowledgment,
   OrderId,
   OrderQuantity,
   PersonalName,
