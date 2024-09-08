@@ -120,6 +120,24 @@ export const PlaceOrderWorkflow = () => {
     amountToBill: BillingAmount;
   };
 
+  /// 受注確定ワークフローの成功出力
+  type OrderPlaced = PricedOrder;
+  type BillableOrderPlaced = {
+    orderId: OrderId;
+    billingAddress: Address;
+    amountToBill: BillingAmount;
+  };
+  type OrderAcknowledgmentSent = undefined;
+
+  // 受注確定ワークフローの失敗出力
+  type PlaceOrderError = undefined;
+
+  type CreateEvents = (
+    pricedOrder: PricedOrder // 入力
+  ) => (
+    orderAcknowledgmentSent?: OrderAcknowledgmentSent // 入力(前のステップのイベント)
+  ) => PlaceOrderEvent[]; // 出力
+
   // ====================
   // パート2: 実装
   // ====================
