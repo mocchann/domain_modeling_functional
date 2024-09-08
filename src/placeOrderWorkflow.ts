@@ -98,6 +98,28 @@ export const PlaceOrderWorkflow = () => {
     placeOrderCommand: PlaceOrderCommand // 入力コマンド
   ) => AsyncResult<PlaceOrderEvent[], PlaceOrderError>; // 出力イベント
 
+  type ValidatedCustomerInfo = CustomerInfo;
+  type ValidatedShippingAddress = Address;
+  type ValidatedBillingAddress = Address;
+  type PricedOrderLine = {
+    orderLineId: string;
+    productCode: ProductCode;
+    quantity: OrderQuantity;
+    linePrice: Price;
+  };
+  type BillingAmount = Price;
+
+  // 価格計算済みの注文の型
+  type PricedOrder = {
+    orderId: OrderId;
+    customerInfo: ValidatedCustomerInfo;
+    shippingAddress: ValidatedShippingAddress;
+    billingAddress: ValidatedBillingAddress;
+    // 検証済みの注文明細行とは異なり、OrderLine→PricedOrderLineに変更
+    orderLines: PricedOrderLine[];
+    amountToBill: BillingAmount;
+  };
+
   // ====================
   // パート2: 実装
   // ====================
