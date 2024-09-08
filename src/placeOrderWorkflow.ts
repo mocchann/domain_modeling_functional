@@ -295,6 +295,7 @@ export const PlaceOrderWorkflow = () => {
     (checkProductCodeExists: CheckProductCodeExists) =>
     (checkAddressExists: CheckAddressExists) =>
     async (unvalidatedOrder: UnvalidatedOrder) => {
+      const create = (value: string): OrderId => ({ value });
       const orderId: OrderId = create(unvalidatedOrder.orderId);
 
       const customerInfo: CustomerInfo = toCustomerInfo(
