@@ -232,13 +232,38 @@ export const PlaceOrderWorkflow = () => {
   const toOrderQuantity =
     (productCode: ProductCode) =>
     (quantity: OrderQuantity): OrderQuantity => {
+      const createUnitQuantity = (unitQuantity: OrderQuantity): number => {
+        if (unitQuantity.type === "unitQuantity") {
+          return unitQuantity.unitQuantity;
+        } else {
+          throw new Error("Invalid unit quantity");
+        }
+      };
+
+      const createKilogramQuantity = (kiloQuantity: OrderQuantity): number => {
+        if (kiloQuantity.type === "kilogramQuantity") {
+          return kiloQuantity.kilogramQuantity;
+        } else {
+          throw new Error("Invalid kilogram quantity");
+        }
+      };
+
+      const createOrderQuantity = (
+        quantity: number,
+        type: string
+      ): OrderQuantity => {
+        return type === "widgetCode"
+          ? { type: "unitQuantity", unitQuantity: quantity }
+          : { type: "kilogramQuantity", kilogramQuantity: quantity };
+      };
+
       switch (productCode.type) {
         case "widgetCode":
           const unitQuantity = createUnitQuantity(quantity);
-          return createOrderQuantity(unitQuantity);
+          return createOrderQuantity(unitQuantity, "widgetCode");
         case "gizmoCode":
           const kilogramQuantity = createKilogramQuantity(quantity);
-          return createOrderQuantity(kilogramQuantity);
+          return createOrderQuantity(kilogramQuantity, "gizmoCode");
         default:
           throw new Error("Unknown product code");
       }
