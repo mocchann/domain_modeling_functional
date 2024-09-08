@@ -291,4 +291,9 @@ export const PlaceOrderWorkflow = () => {
 
       return validatedOrder;
     };
+
+  // Priceに数量を掛け合わせられるヘルパー関数
+  const multiply = (p: Price, qty: number): Price => {
+    return create(p * qty);
+  };
 };
