@@ -388,15 +388,15 @@ export const PlaceOrderWorkflow = () => {
       // 送信が成功した場合はOrderAcknowledgmentSentを返す
       // 失敗した場合はNoneを返す
       const sendResult = sendOrderAcknowledgment(acknowledgment);
-      switch (sendResult) {
+      switch (sendResult.type) {
         case "Sent":
           const event: OrderAcknowledgmentSent = {
             orderId: pricedOrder.orderId,
             emailAddress: pricedOrder.customerInfo.emailAddress,
           };
-          return { type: "Some", value: event };
+          return event;
         case "NotSent":
-          return { type: "None" };
+          return undefined;
       }
     };
 
