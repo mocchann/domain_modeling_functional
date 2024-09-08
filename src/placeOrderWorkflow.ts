@@ -186,12 +186,12 @@ export const PlaceOrderWorkflow = () => {
       if (checkedAddress.success) {
         const { address: checkAddress } = checkedAddress.value;
 
-        const addressLine1 = create(checkAddress.addressLine1);
-        const addressLine2 = createOption(checkAddress.addressLine2); // 入力にnullまたは空を指定でき、その場合はNoneを返す
-        const addressLine3 = createOption(checkAddress.addressLine3);
-        const addressLine4 = createOption(checkAddress.addressLine4);
-        const city = create(checkAddress.city);
-        const zipCode = create(checkAddress.zipCode);
+        const addressLine1 = checkAddress.addressLine1;
+        const addressLine2 = checkAddress.addressLine2;
+        const addressLine3 = checkAddress.addressLine3;
+        const addressLine4 = checkAddress.addressLine4;
+        const city = checkAddress.city;
+        const zipCode = checkAddress.zipCode;
 
         const address: Address = {
           addressLine1,
