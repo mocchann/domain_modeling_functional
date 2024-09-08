@@ -320,6 +320,7 @@ export const PlaceOrderWorkflow = () => {
     return create(total);
   };
 
+  // 価格計算ステップの実装
   const priceOrder: PriceOrder = (getProductPrice) => (validatedOrder) => {
     const lines = validatedOrder.orderLines.map(
       toPricedOrderLine(getProductPrice)
