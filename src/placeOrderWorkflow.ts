@@ -226,8 +226,7 @@ export const PlaceOrderWorkflow = () => {
           productCode
         );
       };
-      const createdProductCode = createProductCode(productCode);
-      return checkProduct(createdProductCode);
+      return checkProduct(productCode);
     };
 
   const toOrderQuantity =
