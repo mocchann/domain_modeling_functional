@@ -68,7 +68,7 @@ export const PlaceOrderWorkflow = () => {
     checkProductCodeExists: CheckProductCodeExists // 依存関係
   ) => (
     checkAddressExists: CheckAddressExists // 依存関係
-  ) => (unvalidatedOrder: UnvalidatedOrder) => ValidatedOrder; // 入力 => 出力
+  ) => (unvalidatedOrder: UnvalidatedOrder) => Promise<ValidatedOrder>; // 入力 => 出力
 
   // ----- 注文の価格決定 -----
 
