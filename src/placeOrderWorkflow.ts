@@ -259,37 +259,36 @@ export const PlaceOrderWorkflow = () => {
 
   /// 注文の検証ステップの実装
 
-  const validateOrder: ValidateOrder = async (
-    checkProductCodeExists: CheckProductCodeExists,
-    checkAddressExists: CheckAddressExists,
-    unvalidatedOrder: UnvalidatedOrder
-  ) => {
-    const orderId: OrderId = create(unvalidatedOrder.orderId);
+  const validateOrder: ValidateOrder =
+    (checkProductCodeExists: CheckProductCodeExists) =>
+    (checkAddressExists: CheckAddressExists) =>
+    async (unvalidatedOrder: UnvalidatedOrder) => {
+      const orderId: OrderId = create(unvalidatedOrder.orderId);
 
-    const customerInfo: CustomerInfo = toCustomerInfo(
-      unvalidatedOrder.customerInfo
-    );
+      const customerInfo: CustomerInfo = toCustomerInfo(
+        unvalidatedOrder.customerInfo
+      );
 
-    const shippingAddress: ShippingAddress = await toAddress(
-      checkAddressExists
-    )(unvalidatedOrder.shippingAddress);
+      const shippingAddress: ShippingAddress = await toAddress(
+        checkAddressExists
+      )(unvalidatedOrder.shippingAddress);
 
-    const billingAddress: BillingAddress = await toAddress(checkAddressExists)(
-      unvalidatedOrder.billingAddress
-    );
+      const billingAddress: BillingAddress = await toAddress(
+        checkAddressExists
+      )(unvalidatedOrder.billingAddress);
 
-    const orderLines = unvalidatedOrder.orderLines.map(
-      toValidatedOrderLine(checkProductCodeExists)
-    );
+      const orderLines = unvalidatedOrder.orderLines.map(
+        toValidatedOrderLine(checkProductCodeExists)
+      );
 
-    const validatedOrder: ValidatedOrder = {
-      orderId,
-      customerInfo,
-      shippingAddress,
-      billingAddress,
-      orderLines,
+      const validatedOrder: ValidatedOrder = {
+        orderId,
+        customerInfo,
+        shippingAddress,
+        billingAddress,
+        orderLines,
+      };
+
+      return validatedOrder;
     };
-
-    return validatedOrder;
-  };
 };
