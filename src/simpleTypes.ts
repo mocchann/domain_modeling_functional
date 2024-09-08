@@ -58,7 +58,7 @@ export type ValidatedOrderLine = {
   quantity: OrderQuantity;
 };
 
-export type Price = undefined;
+export type Price = number;
 
 export type FirstName = string;
 export type MiddleInitial = string;
@@ -69,3 +69,11 @@ export type PersonalName = {
   lastName: LastName;
 };
 export type EmailAddress = string;
+
+export type HtmlString = { type: "htmlString"; html: string };
+type Sent = undefined;
+type NotSent = undefined;
+type SendResult = Sent | NotSent;
+export type SendOrderAcknowledgment = (
+  orderAcknowledgment: OrderAcknowledgment
+) => SendResult;
