@@ -8,6 +8,7 @@ import {
   CustomerInfo,
   EmailAddress,
   FirstName,
+  HtmlString,
   LastName,
   OrderId,
   OrderQuantity,
