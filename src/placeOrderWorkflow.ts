@@ -390,4 +390,35 @@ export const PlaceOrderWorkflow = () => {
       return { type: "None" };
     };
 
+  const createEvents: CreateEvents =
+    (pricedOrder) => (acknowledgmentEventOpt) => {
+      const event: PlaceOrderEvent = {
+        type: "orderPlaced",
+        orderPlaced: pricedOrder,
+      };
+      const event1 = listOfOption(event);
+
+      const event20pt = acknowledgmentEventOpt
+        ? {
+            type: "orderAcknowledgmentSent",
+            orderAcknowledgmentSent: acknowledgmentEventOpt,
+          }
+        : undefined;
+      const event2 = listOfOption(event20pt);
+
+      const event30pt = (() => {
+        const billingEvent = createBillingEvent(pricedOrder)();
+        if (billingEvent.type === "Some") {
+          return {
+            type: "billableOrderPlaced",
+            billableOrderPlaced: billingEvent.value,
+          };
+        }
+        return undefined;
+      })();
+      const event3 = listOfOption(event30pt);
+
+      return [...event1, ...event2, ...event3];
+    };
+
 };
