@@ -132,6 +132,14 @@ export const PlaceOrderWorkflow = () => {
     emailAddress: EmailAddress;
   };
 
+  type AcknowledgeOrder = (
+    createOrderAcknowledgmentLetter: CreateOrderAcknowledgmentLetter // 依存関係
+  ) => (
+    sendOrderAcknowledgment: SendOrderAcknowledgment // 依存関係
+  ) => (
+    pricedOrder: PricedOrder // 入力
+  ) => OrderAcknowledgmentSent | undefined; // 出力
+
   // 受注確定ワークフローの失敗出力
   type PlaceOrderError = undefined;
 
