@@ -416,9 +416,8 @@ export const PlaceOrderWorkflow = () => {
   };
 
   const createBillingEvent =
-    (pricedOrder: PricedOrder) =>
-    (billableOrderPlaced?: BillableOrderPlaced) => {
-      const BillingAmount = value(pricedOrder.amountToBill);
+    (pricedOrder: PricedOrder) => (): Option<BillableOrderPlaced> => {
+      const BillingAmount = pricedOrder.amountToBill;
       if (BillingAmount > 0) {
         const order = {
           orderId: pricedOrder.orderId,
