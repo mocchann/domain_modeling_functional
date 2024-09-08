@@ -320,4 +320,22 @@ export const PlaceOrderWorkflow = () => {
     return create(total);
   };
 
+  const priceOrder: PriceOrder = (getProductPrice) => (validatedOrder) => {
+    const lines = validatedOrder.orderLines.map(
+      toPricedOrderLine(getProductPrice)
+    );
+    const amountToBill = sumPrices(lines.map((line) => line.linePrice));
+
+    const pricedOrder: PricedOrder = {
+      orderId: validatedOrder.orderId,
+      customerInfo: validatedOrder.customerInfo,
+      shippingAddress: validatedOrder.shippingAddress,
+      billingAddress: validatedOrder.billingAddress,
+      orderLines: lines,
+      amountToBill,
+    };
+
+    return pricedOrder;
+  };
+
 };
