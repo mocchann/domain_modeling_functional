@@ -339,4 +339,30 @@ export const PlaceOrderWorkflow = () => {
     return pricedOrder;
   };
 
+  // 確認ステップの実装
+  const acknowledgeOrder: AcknowledgeOrder =
+    (createAcknowledgmentLetter) =>
+    (sendOrderAcknowledgment) =>
+    (pricedOrder) => {
+      const letter = createAcknowledgmentLetter(pricedOrder);
+      const acknowledgment: OrderAcknowledgment = {
+        emailAddress: pricedOrder.customerInfo.emailAddress,
+        letter,
+      };
+
+      // 送信が成功した場合はOrderAcknowledgmentSentを返す
+      // 失敗した場合はNoneを返す
+      const sendResult = sendOrderAcknowledgment(acknowledgment);
+      switch (sendResult) {
+        case "Sent":
+          const event: OrderAcknowledgmentSent = {
+            orderId: pricedOrder.orderId,
+            emailAddress: pricedOrder.customerInfo.emailAddress,
+          };
+          return { type: "Some", value: event };
+        case "NotSent":
+          return { type: "None" };
+      }
+    };
+
 };
