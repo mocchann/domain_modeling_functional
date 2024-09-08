@@ -272,7 +272,7 @@ export const PlaceOrderWorkflow = () => {
   const toValidatedOrderLine =
     (checkProductCodeExists: CheckProductCodeExists) =>
     (unvalidatedOrderLine: UnvalidatedOrderLine): ValidatedOrderLine => {
-      const orderLineId = create(unvalidatedOrderLine.orderLineId);
+      const orderLineId = unvalidatedOrderLine.orderLineId;
       const productCode = toProductCode(checkProductCodeExists)(
         unvalidatedOrderLine.productCode
       ); // ヘルパー関数(toProductCode)
