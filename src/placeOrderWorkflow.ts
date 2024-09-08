@@ -127,7 +127,10 @@ export const PlaceOrderWorkflow = () => {
     billingAddress: Address;
     amountToBill: BillingAmount;
   };
-  type OrderAcknowledgmentSent = undefined;
+  type OrderAcknowledgmentSent = {
+    orderId: OrderId;
+    emailAddress: EmailAddress;
+  };
 
   // 受注確定ワークフローの失敗出力
   type PlaceOrderError = undefined;
