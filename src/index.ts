@@ -1956,7 +1956,7 @@ namespace Chapter_9 {
   ): PricedOrderLine => {
     const qty = orderQuantity.value(line.quantity);
     const price = getProductPrice(line.productCode);
-    const linePrice = price.multiply(price, qty)
+    const linePrice = multiply(price, qty)
 
     return {
       orderLineId: line.orderLineId,
