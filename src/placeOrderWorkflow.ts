@@ -94,6 +94,9 @@ export const PlaceOrderWorkflow = () => {
     // etc
   };
   type PlaceOrderCommand = Command<UnvalidatedOrder>;
+  type PlaceOrderWorkflow = (
+    placeOrderCommand: PlaceOrderCommand // 入力コマンド
+  ) => AsyncResult<PlaceOrderEvent[], PlaceOrderError>; // 出力イベント
 
   // ====================
   // パート2: 実装
