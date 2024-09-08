@@ -78,7 +78,7 @@ export const PlaceOrderWorkflow = () => {
   ) => HtmlString;
   type PriceOrder = (
     getProductPrice: GetProductPrice
-  ) => (validatedOrder: ValidatedOrder) => PriceOrder;
+  ) => (validatedOrder: ValidatedOrder) => PricedOrder;
 
   // ====================
   // パート2: 実装
