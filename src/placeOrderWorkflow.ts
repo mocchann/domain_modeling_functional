@@ -160,12 +160,9 @@ export const PlaceOrderWorkflow = () => {
   const toCustomerInfo = (
     unvalidatedCustomerInfo: UnvalidatedCustomerInfo
   ): CustomerInfo => {
-    const firstName: FirstName = create(unvalidatedCustomerInfo.firstName);
-    const lastName: LastName = create(unvalidatedCustomerInfo.lastName);
-    const emailAddress: EmailAddress = create(
-      unvalidatedCustomerInfo.emailAddress
-    );
-
+    const firstName: FirstName = unvalidatedCustomerInfo.firstName;
+    const lastName: LastName = unvalidatedCustomerInfo.lastName;
+    const emailAddress: EmailAddress = unvalidatedCustomerInfo.emailAddress;
     const name: PersonalName = {
       firstName,
       lastName,
