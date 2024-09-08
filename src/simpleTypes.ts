@@ -71,9 +71,13 @@ export type PersonalName = {
 export type EmailAddress = string;
 
 export type HtmlString = { type: "htmlString"; html: string };
-type Sent = undefined;
-type NotSent = undefined;
+type Sent = { type: "Sent" };
+type NotSent = { type: "NotSent" };
 type SendResult = Sent | NotSent;
+export type OrderAcknowledgment = {
+  emailAddress: EmailAddress;
+  letter: HtmlString;
+};
 export type SendOrderAcknowledgment = (
   orderAcknowledgment: OrderAcknowledgment
 ) => SendResult;
