@@ -375,4 +375,19 @@ export const PlaceOrderWorkflow = () => {
     }
   };
 
+  const createBillingEvent =
+    (pricedOrder: PricedOrder) =>
+    (billableOrderPlaced?: BillableOrderPlaced) => {
+      const BillingAmount = value(pricedOrder.amountToBill);
+      if (BillingAmount > 0) {
+        const order = {
+          orderId: pricedOrder.orderId,
+          billingAddress: pricedOrder.billingAddress,
+          amountToBill: pricedOrder.amountToBill,
+        };
+        return { type: "Some", value: order };
+      }
+      return { type: "None" };
+    };
+
 };
