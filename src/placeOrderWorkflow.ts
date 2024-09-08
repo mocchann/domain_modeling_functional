@@ -421,4 +421,35 @@ export const PlaceOrderWorkflow = () => {
       return [...event1, ...event2, ...event3];
     };
 
+  // ====================
+  // ワークフローの全体像
+  // ====================
+
+  const placeOrder =
+    (checkProductCodeExists: CheckProductCodeExists) =>
+    (checkAddressExists: CheckAddressExists) =>
+    (getProductPrice: GetProductPrice) =>
+    (createOrderAcknowledgmentLetter: CreateOrderAcknowledgmentLetter) =>
+    (sendOrderAcknowledgment: SendOrderAcknowledgment): PlaceOrderWorkflow => {
+      return async (unvalidatedOrder: UnvalidatedOrder) => {
+        const validatedOrder = await validateOrder(checkProductCodeExists)(
+          checkAddressExists
+        )(unvalidatedOrder);
+
+        const pricedOrder = priceOrder(getProductPrice)(validatedOrder);
+
+        const orderAcknowledgmentLetter =
+          createOrderAcknowledgmentLetter(pricedOrder);
+
+        await sendOrderAcknowledgment(orderAcknowledgmentLetter);
+
+        const acknowledgmentOption = acknowledgeOrder(
+          createOrderAcknowledgmentLetter
+        )(sendOrderAcknowledgment)(pricedOrder);
+
+        const events = createEvents(pricedOrder)(acknowledgmentOption);
+
+        return events;
+      };
+    };
 };
