@@ -15,6 +15,7 @@ import {
   PersonalName,
   Price,
   ProductCode,
+  SendOrderAcknowledgment,
   ShippingAddress,
   UnvalidatedAddress,
   UnvalidatedAmountToBill,
