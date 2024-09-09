@@ -141,7 +141,10 @@ export const PlaceOrderWorkflow = () => {
   ) => OrderAcknowledgmentSent | undefined; // 出力
 
   // 受注確定ワークフローの失敗出力
-  type PlaceOrderError = undefined;
+  type PlaceOrderError =
+    | { type: "validationError"; error: string }
+    | { type: "productOutOfStock"; error: ProductCode }
+    | { type: "remoteServiceError"; error: RemoteServiceError };
 
   type CreateEvents = (
     pricedOrder: PricedOrder // 入力
