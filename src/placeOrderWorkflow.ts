@@ -40,10 +40,9 @@ export const PlaceOrderWorkflow = () => {
     | { success: true; value: T }
     | { success: false; error: E };
   type AsyncResult<S, F> = Promise<Result<S, F>>;
-  type AddressValidationError = {
-    type: "addressValidationError";
-    error: string;
-  };
+  type AddressValidationError =
+    | { type: "invalidFormat"; error: string }
+    | { type: "addressNotFound"; error: string };
   type CheckAddressExists = (
     unvalidatedAddress: UnvalidatedAddress
   ) => AsyncResult<CheckedAddress, AddressValidationError>;
