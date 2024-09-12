@@ -62,14 +62,12 @@ export const PlaceOrderWorkflow = () => {
     orderLines: ValidatedOrderLine[];
   };
 
-  type ValidationError = undefined;
+  type ValidationError = { type: "error"; error: string };
   type ValidateOrder = (
     checkProductCodeExists: CheckProductCodeExists // 依存関係
   ) => (
     checkAddressExists: CheckAddressExists // 依存関係
-  ) => (
-    unvalidatedOrder: UnvalidatedOrder
-  ) => AsyncResult<ValidatedOrder, ValidationError>; // 入力 => 出力
+  ) => (unvalidatedOrder: UnvalidatedOrder) => Promise<ValidatedOrder>; // 入力 => 出力
 
   // ----- 注文の価格決定 -----
 
@@ -78,10 +76,10 @@ export const PlaceOrderWorkflow = () => {
     pricedOrder: PricedOrder
   ) => HtmlString;
 
-  type PricingError = undefined;
+  type PricingError = { type: "error"; error: string };
   type PriceOrder = (
     getProductPrice: GetProductPrice
-  ) => (validatedOrder: ValidatedOrder) => Result<PricedOrder, PricingError>;
+  ) => (validatedOrder: ValidatedOrder) => PricedOrder;
 
   type PlaceOrderEvent =
     | { type: "orderPlaced"; orderPlaced: OrderPlaced }
@@ -299,9 +297,7 @@ export const PlaceOrderWorkflow = () => {
   const validateOrder: ValidateOrder =
     (checkProductCodeExists: CheckProductCodeExists) =>
     (checkAddressExists: CheckAddressExists) =>
-    async (
-      unvalidatedOrder: UnvalidatedOrder
-    ): AsyncResult<ValidatedOrder, ValidationError> => {
+    async (unvalidatedOrder: UnvalidatedOrder) => {
       const create = (value: string): OrderId => ({ value });
       const orderId: OrderId = create(unvalidatedOrder.orderId);
 
@@ -329,7 +325,7 @@ export const PlaceOrderWorkflow = () => {
         orderLines,
       };
 
-      return { type: "ok", value: validatedOrder };
+      return validatedOrder;
     };
 
   // Priceに数量を掛け合わせられるヘルパー関数
@@ -363,25 +359,23 @@ export const PlaceOrderWorkflow = () => {
   };
 
   // 価格計算ステップの実装
-  const priceOrder: PriceOrder =
-    (getProductPrice) =>
-    (validatedOrder): Result<PricedOrder, PricingError> => {
-      const lines = validatedOrder.orderLines.map(
-        toPricedOrderLine(getProductPrice)
-      );
-      const amountToBill = sumPrices(lines.map((line) => line.linePrice));
+  const priceOrder: PriceOrder = (getProductPrice) => (validatedOrder) => {
+    const lines = validatedOrder.orderLines.map(
+      toPricedOrderLine(getProductPrice)
+    );
+    const amountToBill = sumPrices(lines.map((line) => line.linePrice));
 
-      const pricedOrder: PricedOrder = {
-        orderId: validatedOrder.orderId,
-        customerInfo: validatedOrder.customerInfo,
-        shippingAddress: validatedOrder.shippingAddress,
-        billingAddress: validatedOrder.billingAddress,
-        orderLines: lines,
-        amountToBill,
-      };
-
-      return { type: "ok", value: pricedOrder };
+    const pricedOrder: PricedOrder = {
+      orderId: validatedOrder.orderId,
+      customerInfo: validatedOrder.customerInfo,
+      shippingAddress: validatedOrder.shippingAddress,
+      billingAddress: validatedOrder.billingAddress,
+      orderLines: lines,
+      amountToBill,
     };
+
+    return pricedOrder;
+  };
 
   // 確認ステップの実装
   const acknowledgeOrder: AcknowledgeOrder =
@@ -488,19 +482,26 @@ export const PlaceOrderWorkflow = () => {
     (sendOrderAcknowledgment: SendOrderAcknowledgment): PlaceOrderWorkflow => {
       return async (placeOrderCommand: PlaceOrderCommand) => {
         // DI
-        const fValidatedOrder = validateOrder(checkProductCodeExists)(
-          checkAddressExists
-        );
+        // PlaceOrderErrorを返すように変換した
+        const validateOrderAdapted =
+          (input1: CheckProductCodeExists) => (input2: CheckAddressExists) => {
+            const fValidateOrder = validateOrder(input1)(input2);
+            return mapError(
+              (fValidateOrder: ValidationError) => ({
+                type: "validation",
+                error: fValidateOrder,
+              }),
+              fValidateOrder
+            );
+          };
         const fPricedOrder = priceOrder(getProductPrice);
         const fAcknowledgmentOption = acknowledgeOrder(
           createOrderAcknowledgmentLetter
         )(sendOrderAcknowledgment);
 
         // exec
-        const validatedOrder = await fValidatedOrder(placeOrderCommand.data);
-        const aValidatedOrder = validateOrderAdapted(validatedOrder);
+        const aValidatedOrder = validateOrderAdapted(placeOrderCommand.data);
 
-        // ここより下は未完成、検証中...
         const pricedOrder = fPricedOrder(aValidatedOrder);
         const aPricedOrder = priceOrderAdapted(pricedOrder);
 
@@ -509,35 +510,6 @@ export const PlaceOrderWorkflow = () => {
         const events = createEvents(pricedOrder)(acknowledgedOption);
 
         return { type: "ok", value: events };
-
-        // const validatedOrderResult = await validateOrderAdapted(
-        //   checkProductCodeExists,
-        //   checkAddressExists,
-        //   placeOrderCommand.data
-        // );
-
-        const pricedOrderResult = bind(
-          validatedOrderResult,
-          (validatedOrderResult) =>
-            priceOrderAdapted(getProductPrice, validatedOrderResult)
-        );
-
-        const acknowledgmentResult = map(pricedOrderResult, (priceOrder) =>
-          acknowledgeOrder(createOrderAcknowledgmentLetter)(
-            sendOrderAcknowledgment
-          )(priceOrder)
-        );
-
-        if (pricedOrderResult.type === "error") {
-          return { type: "error", error: pricedOrderResult.error };
-        }
-
-        const eventsResult = map(acknowledgmentResult, (acknowledgmentOption) =>
-          createEvents(pricedOrderResult.value)(acknowledgmentOption)
-        );
-
-        // return { type: "ok", value: events };
-        return eventsResult;
       };
     };
 
@@ -557,10 +529,10 @@ export const PlaceOrderWorkflow = () => {
     }
   };
 
-  const bind = <T, E, U>(
-    result: Result<T, E>,
-    f: (value: T) => Result<U, E>
-  ): Result<U, E> => {
+  const bind = <T, E1, E2, U>(
+    result: Result<T, E1>,
+    f: (value: T) => Result<U, E2>
+  ): Result<U, E1 | E2> => {
     switch (result.type) {
       case "ok":
         return f(result.value);
@@ -579,13 +551,6 @@ export const PlaceOrderWorkflow = () => {
       case "error":
         return result;
     }
-  };
-
-  // PlaceOrderErrorを返すように変換した
-  const validateOrderAdapted = (
-    validatedOrder: Result<ValidatedOrder, ValidationError>
-  ) => {
-    return mapError((error) => ({ type: "validation", error }), validatedOrder);
   };
 
   // PlaceOrderErrorを返すように変換した
