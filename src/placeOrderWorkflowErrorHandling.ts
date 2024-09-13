@@ -67,7 +67,9 @@ export const PlaceOrderWorkflow = () => {
     checkProductCodeExists: CheckProductCodeExists // 依存関係
   ) => (
     checkAddressExists: CheckAddressExists // 依存関係
-  ) => (unvalidatedOrder: UnvalidatedOrder) => Promise<ValidatedOrder>; // 入力 => 出力
+  ) => (
+    unvalidatedOrder: UnvalidatedOrder // 入力
+  ) => Result<ValidatedOrder, ValidationError>; // 出力
 
   // ----- 注文の価格決定 -----
 
@@ -79,7 +81,7 @@ export const PlaceOrderWorkflow = () => {
   type PricingError = { type: "error"; error: string };
   type PriceOrder = (
     getProductPrice: GetProductPrice
-  ) => (validatedOrder: ValidatedOrder) => PricedOrder;
+  ) => (validatedOrder: ValidatedOrder) => Result<PricedOrder, PricingError>;
 
   type PlaceOrderEvent =
     | { type: "orderPlaced"; orderPlaced: OrderPlaced }
@@ -325,7 +327,7 @@ export const PlaceOrderWorkflow = () => {
         orderLines,
       };
 
-      return validatedOrder;
+      return { type: "ok", value: validatedOrder };
     };
 
   // Priceに数量を掛け合わせられるヘルパー関数
@@ -374,7 +376,7 @@ export const PlaceOrderWorkflow = () => {
       amountToBill,
     };
 
-    return pricedOrder;
+    return { type: "ok", value: pricedOrder };
   };
 
   // 確認ステップの実装
@@ -434,7 +436,7 @@ export const PlaceOrderWorkflow = () => {
 
   const createEvents: CreateEvents =
     (pricedOrder) =>
-    (acknowledgmentEventOpt): PlaceOrderEvent[] => {
+    (acknowledgmentEventOpt?): PlaceOrderEvent[] => {
       const event: PlaceOrderEvent = {
         type: "orderPlaced",
         orderPlaced: pricedOrder,
@@ -482,32 +484,38 @@ export const PlaceOrderWorkflow = () => {
     (sendOrderAcknowledgment: SendOrderAcknowledgment): PlaceOrderWorkflow => {
       return async (placeOrderCommand: PlaceOrderCommand) => {
         // DI
-        // PlaceOrderErrorを返すように変換した
-        const validateOrderAdapted =
-          (input1: CheckProductCodeExists) => (input2: CheckAddressExists) => {
-            const fValidateOrder = validateOrder(input1)(input2);
-            return mapError(
-              (fValidateOrder: ValidationError) => ({
-                type: "validation",
-                error: fValidateOrder,
-              }),
-              fValidateOrder
-            );
-          };
+        const fValidateOrder = validateOrder(checkProductCodeExists)(
+          checkAddressExists
+        );
         const fPricedOrder = priceOrder(getProductPrice);
         const fAcknowledgmentOption = acknowledgeOrder(
           createOrderAcknowledgmentLetter
         )(sendOrderAcknowledgment);
+        const validateOrderAdapted = (unvalidatedOrder: UnvalidatedOrder) => {
+          return mapError(
+            (fValidateOrder: ValidationError) => ({
+              type: "validation",
+              error: fValidateOrder,
+            }),
+            fValidateOrder(unvalidatedOrder)
+          );
+        };
+        const priceOrderAdapted = (aValidatedOrder: ValidatedOrder) => {
+          return mapError(
+            (fPricedOrder: PricingError) => ({
+              type: "pricing",
+              error: fPricedOrder,
+            }),
+            fPricedOrder(aValidatedOrder)
+          );
+        };
+        const fCreateEvents = createEvents;
 
         // exec
         const aValidatedOrder = validateOrderAdapted(placeOrderCommand.data);
-
-        const pricedOrder = fPricedOrder(aValidatedOrder);
-        const aPricedOrder = priceOrderAdapted(pricedOrder);
-
-        const acknowledgedOption = fAcknowledgmentOption(pricedOrder);
-
-        const events = createEvents(pricedOrder)(acknowledgedOption);
+        const aPricedOrder = bind(aValidatedOrder, priceOrderAdapted);
+        const acknowledgedOption = map(aPricedOrder, fAcknowledgmentOption);
+        const events = map(acknowledgedOption, fCreateEvents(aPricedOrder));
 
         return { type: "ok", value: events };
       };
@@ -551,12 +559,5 @@ export const PlaceOrderWorkflow = () => {
       case "error":
         return result;
     }
-  };
-
-  // PlaceOrderErrorを返すように変換した
-  const priceOrderAdapted = (
-    pricedOrder: Result<PricedOrder, PricingError>
-  ) => {
-    return mapError((error) => ({ type: "pricing", error }), pricedOrder);
   };
 };
