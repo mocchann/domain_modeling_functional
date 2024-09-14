@@ -36,14 +36,23 @@ export const PlaceOrderWorkflow = () => {
 
   type CheckProductCodeExists = (productCode: ProductCode) => boolean;
   type CheckedAddress = { type: "checkedAddress"; address: Address };
+
   type Result<T, E> = { type: "ok"; value: T } | { type: "error"; error: E };
   type AsyncResult<S, F> = Promise<Result<S, F>>;
-  type AddressValidationError =
-    | { type: "invalidFormat"; error: string }
-    | { type: "addressNotFound"; error: string };
+
+  type Uri = string;
+  type ServiceInfo = {
+    name: string;
+    endpoint: Uri;
+  };
+  type Exception = undefined;
+  type RemoteServerError = {
+    service: ServiceInfo;
+    exception: Exception;
+  };
   type CheckAddressExists = (
     unvalidatedAddress: UnvalidatedAddress
-  ) => AsyncResult<CheckedAddress, AddressValidationError>;
+  ) => AsyncResult<CheckedAddress, RemoteServerError>;
 
   type UnvalidatedOrder = {
     orderId: string;
@@ -146,7 +155,8 @@ export const PlaceOrderWorkflow = () => {
   // 受注確定ワークフローの失敗出力
   type PlaceOrderError =
     | { type: "validation"; error: ValidationError }
-    | { type: "pricing"; error: PricingError };
+    | { type: "pricing"; error: PricingError }
+    | { type: "remoteServiceError"; error: RemoteServerError };
 
   type CreateEvents = (
     pricedOrder: PricedOrder // 入力
