@@ -2,7 +2,6 @@
  * Assembled pipelines
  */
 
-import { error } from "console";
 import {
   Address,
   BillingAddress,
@@ -76,10 +75,8 @@ export const PlaceOrderWorkflow = () => {
   type ValidateOrder = (
     checkProductCodeExists: CheckProductCodeExists // 依存関係
   ) => (
-    checkAddressExists: CheckAddressExists // 依存関係
-  ) => (
     unvalidatedOrder: UnvalidatedOrder // 入力
-  ) => Result<ValidatedOrder, ValidationError>; // 出力
+  ) => AsyncResult<ValidatedOrder, ValidationError>; // 出力
 
   // ----- 注文の価格決定 -----
 
@@ -157,13 +154,23 @@ export const PlaceOrderWorkflow = () => {
   type PlaceOrderError =
     | { type: "validation"; error: ValidationError }
     | { type: "pricing"; error: PricingError }
-    | { type: "remoteServiceError"; error: RemoteServerError };
+    | { type: "remoteServiceError"; error: RemoteServerError }
+    | { type: "createEventsError"; error: CreateEventsError };
+
+  type CreateEventsError = { type: "error"; error: string };
 
   type CreateEvents = (
     pricedOrder: PricedOrder // 入力
   ) => (
     orderAcknowledgmentSent?: OrderAcknowledgmentSent // 入力(前のステップのイベント)
   ) => PlaceOrderEvent[]; // 出力
+
+  type TimeoutException = { type: "timeoutException"; value: string };
+  type AuthorizationException = {
+    type: "authorizationException";
+    value: string;
+  };
+  type ServiceException = TimeoutException | AuthorizationException;
 
   // ====================
   // パート2: 実装
@@ -192,33 +199,37 @@ export const PlaceOrderWorkflow = () => {
     return customerInfo;
   };
 
-  const toAddress =
-    (checkAddressExists: CheckAddressExists) =>
-    async (unvalidatedAddress: UnvalidatedAddress): Promise<Address> => {
-      // リモートサービスを呼び出す
-      const checkedAddress = await checkAddressExists(unvalidatedAddress);
+  const toAddress = async (
+    unvalidatedAddress: UnvalidatedAddress
+  ): Promise<Address> => {
+    // リモートサービスを呼び出す
+    const checkedAddress = checkAddressExistsR(unvalidatedAddress);
 
-      // パターンマッチを使用して内部値を抽出する
-      const { address: checkAddress } = checkedAddress;
+    if (checkedAddress.type === "error") {
+      throw new Error("Invalid address");
+    }
 
-      const addressLine1 = checkAddress.addressLine1;
-      const addressLine2 = checkAddress.addressLine2;
-      const addressLine3 = checkAddress.addressLine3;
-      const addressLine4 = checkAddress.addressLine4;
-      const city = checkAddress.city;
-      const zipCode = checkAddress.zipCode;
+    // パターンマッチを使用して内部値を抽出する
+    const { address: checkAddress } = await checkedAddress.value;
 
-      const address: Address = {
-        addressLine1,
-        addressLine2,
-        addressLine3,
-        addressLine4,
-        city,
-        zipCode,
-      };
+    const addressLine1 = checkAddress.addressLine1;
+    const addressLine2 = checkAddress.addressLine2;
+    const addressLine3 = checkAddress.addressLine3;
+    const addressLine4 = checkAddress.addressLine4;
+    const city = checkAddress.city;
+    const zipCode = checkAddress.zipCode;
 
-      return address;
+    const address: Address = {
+      addressLine1,
+      addressLine2,
+      addressLine3,
+      addressLine4,
+      city,
+      zipCode,
     };
+
+    return address;
+  };
 
   const predicateToPassthru =
     (errorMsg: string) => (f: CheckProductCodeExists) => (x: ProductCode) => {
@@ -305,7 +316,6 @@ export const PlaceOrderWorkflow = () => {
 
   const validateOrder: ValidateOrder =
     (checkProductCodeExists: CheckProductCodeExists) =>
-    (checkAddressExists: CheckAddressExists) =>
     async (unvalidatedOrder: UnvalidatedOrder) => {
       const create = (value: string): OrderId => ({ value });
       const orderId: OrderId = create(unvalidatedOrder.orderId);
@@ -315,12 +325,12 @@ export const PlaceOrderWorkflow = () => {
       );
 
       const shippingAddress: ShippingAddress = await toAddress(
-        checkAddressExists
-      )(unvalidatedOrder.shippingAddress);
+        unvalidatedOrder.shippingAddress
+      );
 
       const billingAddress: BillingAddress = await toAddress(
-        checkAddressExists
-      )(unvalidatedOrder.billingAddress);
+        unvalidatedOrder.billingAddress
+      );
 
       const orderLines = unvalidatedOrder.orderLines.map(
         toValidatedOrderLine(checkProductCodeExists)
@@ -479,13 +489,6 @@ export const PlaceOrderWorkflow = () => {
       return [...event1, ...event2, ...event3];
     };
 
-  type TimeoutException = { type: "timeoutException"; value: string };
-  type AuthorizationException = {
-    type: "authorizationException";
-    value: string;
-  };
-  type ServiceException = TimeoutException | AuthorizationException;
-
   const serviceExceptionAdapter = <T, X>(
     serviceInfo: ServiceInfo,
     fService: (x: X) => T
@@ -562,26 +565,27 @@ export const PlaceOrderWorkflow = () => {
 
   const placeOrder =
     (checkProductCodeExists: CheckProductCodeExists) =>
-    (checkAddressExists: CheckAddressExists) =>
     (getProductPrice: GetProductPrice) =>
     (createOrderAcknowledgmentLetter: CreateOrderAcknowledgmentLetter) =>
     (sendOrderAcknowledgment: SendOrderAcknowledgment): PlaceOrderWorkflow => {
       return async (placeOrderCommand: PlaceOrderCommand) => {
         // DI
-        const fValidateOrder = validateOrder(checkProductCodeExists)(
-          checkAddressExists
-        );
+        const fValidateOrder = validateOrder(checkProductCodeExists);
         const fPricedOrder = priceOrder(getProductPrice);
         const fAcknowledgmentOption = acknowledgeOrder(
           createOrderAcknowledgmentLetter
         )(sendOrderAcknowledgment);
-        const validateOrderAdapted = (unvalidatedOrder: UnvalidatedOrder) => {
+        const fCreateEvents = createEvents;
+
+        const validateOrderAdapted = async (
+          unvalidatedOrder: UnvalidatedOrder
+        ) => {
           return mapError(
             (fValidateOrder: ValidationError) => ({
               type: "validation" as const,
               error: fValidateOrder,
             }),
-            fValidateOrder(unvalidatedOrder)
+            await fValidateOrder(unvalidatedOrder)
           );
         };
         const priceOrderAdapted = (aValidatedOrder: ValidatedOrder) => {
@@ -593,15 +597,24 @@ export const PlaceOrderWorkflow = () => {
             fPricedOrder(aValidatedOrder)
           );
         };
-        const fCreateEvents = createEvents;
 
         // exec
-        const aValidatedOrder = validateOrderAdapted(placeOrderCommand.data);
+        const aValidatedOrder = await validateOrderAdapted(
+          placeOrderCommand.data
+        );
         const aPricedOrder = bind(aValidatedOrder, priceOrderAdapted);
         const acknowledgedOption = map(aPricedOrder, fAcknowledgmentOption);
-        const events = map(acknowledgedOption, fCreateEvents(aPricedOrder));
 
-        return { type: "ok", value: events };
+        if (aPricedOrder.type === "error") {
+          return { type: "error", error: aPricedOrder.error };
+        }
+
+        const events = map(
+          acknowledgedOption,
+          fCreateEvents(aPricedOrder.value)
+        );
+
+        return events;
       };
     };
 
