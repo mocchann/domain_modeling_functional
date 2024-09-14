@@ -2,6 +2,7 @@
  * Assembled pipelines
  */
 
+import { error } from "console";
 import {
   Address,
   BillingAddress,
@@ -45,14 +46,14 @@ export const PlaceOrderWorkflow = () => {
     name: string;
     endpoint: Uri;
   };
-  type Exception = undefined;
+  type Exception = string;
   type RemoteServerError = {
     service: ServiceInfo;
     exception: Exception;
   };
   type CheckAddressExists = (
     unvalidatedAddress: UnvalidatedAddress
-  ) => AsyncResult<CheckedAddress, RemoteServerError>;
+  ) => Promise<CheckedAddress>;
 
   type UnvalidatedOrder = {
     orderId: string;
@@ -198,29 +199,25 @@ export const PlaceOrderWorkflow = () => {
       const checkedAddress = await checkAddressExists(unvalidatedAddress);
 
       // パターンマッチを使用して内部値を抽出する
-      if (checkedAddress.type === "ok") {
-        const { address: checkAddress } = checkedAddress.value;
+      const { address: checkAddress } = checkedAddress;
 
-        const addressLine1 = checkAddress.addressLine1;
-        const addressLine2 = checkAddress.addressLine2;
-        const addressLine3 = checkAddress.addressLine3;
-        const addressLine4 = checkAddress.addressLine4;
-        const city = checkAddress.city;
-        const zipCode = checkAddress.zipCode;
+      const addressLine1 = checkAddress.addressLine1;
+      const addressLine2 = checkAddress.addressLine2;
+      const addressLine3 = checkAddress.addressLine3;
+      const addressLine4 = checkAddress.addressLine4;
+      const city = checkAddress.city;
+      const zipCode = checkAddress.zipCode;
 
-        const address: Address = {
-          addressLine1,
-          addressLine2,
-          addressLine3,
-          addressLine4,
-          city,
-          zipCode,
-        };
+      const address: Address = {
+        addressLine1,
+        addressLine2,
+        addressLine3,
+        addressLine4,
+        city,
+        zipCode,
+      };
 
-        return address;
-      } else {
-        throw new Error(checkedAddress.type);
-      }
+      return address;
     };
 
   const predicateToPassthru =
@@ -482,6 +479,83 @@ export const PlaceOrderWorkflow = () => {
       return [...event1, ...event2, ...event3];
     };
 
+  type TimeoutException = { type: "timeoutException"; value: string };
+  type AuthorizationException = {
+    type: "authorizationException";
+    value: string;
+  };
+  type ServiceException = TimeoutException | AuthorizationException;
+
+  const serviceExceptionAdapter = <T, X>(
+    serviceInfo: ServiceInfo,
+    fService: (x: X) => T
+  ): ((x: X) => Result<T, RemoteServerError>) => {
+    return (x: X): Result<T, RemoteServerError> => {
+      try {
+        const result = fService(x);
+        return { type: "ok", value: result };
+      } catch (exception) {
+        switch ((exception as ServiceException).type) {
+          case "timeoutException":
+            const timeoutError = {
+              service: serviceInfo,
+              exception: (exception as TimeoutException).value,
+            };
+            return { type: "error", error: timeoutError };
+          case "authorizationException":
+            const authError = {
+              service: serviceInfo,
+              exception: (exception as AuthorizationException).value,
+            };
+            return { type: "error", error: authError };
+          default:
+            throw { type: "error", error: exception };
+        }
+      }
+    };
+  };
+
+  const checkAddressExists: CheckAddressExists = async (
+    unvalidatedAddress: UnvalidatedAddress
+  ) => {
+    const res = await fetch("https://example.com/address-service/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(unvalidatedAddress),
+    });
+
+    const address = await res.json();
+
+    const checkedAddress: CheckedAddress = {
+      type: "checkedAddress",
+      address,
+    };
+
+    return checkedAddress;
+  };
+
+  const checkAddressExistsR = (unvalidatedAddress: UnvalidatedAddress) => {
+    const serviceInfo: ServiceInfo = {
+      name: "AddressService",
+      endpoint: "https://example.com/address-service/",
+    };
+
+    const adaptedService = serviceExceptionAdapter(
+      serviceInfo,
+      checkAddressExists
+    );
+
+    return mapError(
+      (adaptedService: RemoteServerError) => ({
+        type: "remoteServiceError" as const,
+        error: adaptedService,
+      }),
+      adaptedService(unvalidatedAddress)
+    );
+  };
+
   // ====================
   // ワークフローの全体像
   // ====================
@@ -504,7 +578,7 @@ export const PlaceOrderWorkflow = () => {
         const validateOrderAdapted = (unvalidatedOrder: UnvalidatedOrder) => {
           return mapError(
             (fValidateOrder: ValidationError) => ({
-              type: "validation",
+              type: "validation" as const,
               error: fValidateOrder,
             }),
             fValidateOrder(unvalidatedOrder)
@@ -513,7 +587,7 @@ export const PlaceOrderWorkflow = () => {
         const priceOrderAdapted = (aValidatedOrder: ValidatedOrder) => {
           return mapError(
             (fPricedOrder: PricingError) => ({
-              type: "pricing",
+              type: "pricing" as const,
               error: fPricedOrder,
             }),
             fPricedOrder(aValidatedOrder)
