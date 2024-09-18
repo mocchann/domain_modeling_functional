@@ -189,36 +189,43 @@ export const PlaceOrderWorkflow = () => {
     return customerInfo;
   };
 
-  const toAddress = async (
+  const toAddress = (
     unvalidatedAddress: UnvalidatedAddress
-  ): Promise<Address> => {
-    // リモートサービスを呼び出す
+  ): ResultAsync<Address, ValidationError> => {
+    // まじ大事な思考手順
+    // ResultAsync<T, E> to ResultAsync<A, E>
+    // 失敗する可能性がある→andThen(bind)を使う
+    // 失敗する可能性がない→mapを使う
+    // mapはResult<T, E>をResult<U, E>に変換する
+    // mapErrはResult<T, E>をResult<T, F>に変換する
+
     const checkedAddress = checkAddressExistsR(unvalidatedAddress);
 
-    if (checkedAddress.type === "error") {
-      throw new Error("Invalid address");
-    }
+    const result = checkedAddress.map((checkedAddress) => {
+      const mappedAddress: Address = {
+        addressLine1: checkedAddress.address.addressLine1,
+        addressLine2: checkedAddress.address.addressLine2,
+        addressLine3: checkedAddress.address.addressLine3,
+        addressLine4: checkedAddress.address.addressLine4,
+        city: checkedAddress.address.city,
+        zipCode: checkedAddress.address.zipCode,
+      };
+      return mappedAddress;
+    });
 
-    // パターンマッチを使用して内部値を抽出する
-    const { address: checkAddress } = await checkedAddress.value;
+    // 本来はここでreturnで良いが、DomainModelingのリポジトリのサンプルコードをみるとtoAddressの引数にはcheckedAddressを渡している
+    // そのため、本来返すべきValidationErrorに無理やり変換している
+    // return result;
 
-    const addressLine1 = checkAddress.addressLine1;
-    const addressLine2 = checkAddress.addressLine2;
-    const addressLine3 = checkAddress.addressLine3;
-    const addressLine4 = checkAddress.addressLine4;
-    const city = checkAddress.city;
-    const zipCode = checkAddress.zipCode;
+    const lierResult = result.mapErr((error) => {
+      const validationError: ValidationError = {
+        type: "error",
+        error: `${error}`,
+      };
+      return validationError;
+    });
 
-    const address: Address = {
-      addressLine1,
-      addressLine2,
-      addressLine3,
-      addressLine4,
-      city,
-      zipCode,
-    };
-
-    return address;
+    return lierResult;
   };
 
   const predicateToPassthru =
@@ -306,35 +313,39 @@ export const PlaceOrderWorkflow = () => {
 
   const validateOrder: ValidateOrder =
     (checkProductCodeExists: CheckProductCodeExists) =>
-    async (unvalidatedOrder: UnvalidatedOrder) => {
-      const create = (value: string): OrderId => ({ value });
-      const orderId: OrderId = create(unvalidatedOrder.orderId);
+    (unvalidatedOrder: UnvalidatedOrder) => {
+      return safeTry(async function* () {
+        const create = (value: string): OrderId => ({ value });
+        const orderId: OrderId = create(unvalidatedOrder.orderId);
 
-      const customerInfo: CustomerInfo = toCustomerInfo(
-        unvalidatedOrder.customerInfo
-      );
+        const customerInfo: CustomerInfo = toCustomerInfo(
+          unvalidatedOrder.customerInfo
+        );
 
-      const shippingAddress: ShippingAddress = await toAddress(
-        unvalidatedOrder.shippingAddress
-      );
+        // ResultAsync<T, E>のTだけを得たいため、yield* safeUnwrap()を使って取得する
+        const shippingAddress = yield* toAddress(
+          unvalidatedOrder.shippingAddress
+        ).safeUnwrap();
 
-      const billingAddress: BillingAddress = await toAddress(
-        unvalidatedOrder.billingAddress
-      );
+        // ResultAsync<T, E>のTだけを得たいため、yield* safeUnwrap()を使って取得する
+        const billingAddress = yield* toAddress(
+          unvalidatedOrder.billingAddress
+        ).safeUnwrap();
 
-      const orderLines = unvalidatedOrder.orderLines.map(
-        toValidatedOrderLine(checkProductCodeExists)
-      );
+        const orderLines = unvalidatedOrder.orderLines.map(
+          toValidatedOrderLine(checkProductCodeExists)
+        );
 
-      const validatedOrder: ValidatedOrder = {
-        orderId,
-        customerInfo,
-        shippingAddress,
-        billingAddress,
-        orderLines,
-      };
+        const validatedOrder: ValidatedOrder = {
+          orderId,
+          customerInfo,
+          shippingAddress,
+          billingAddress,
+          orderLines,
+        };
 
-      return { type: "ok", value: validatedOrder };
+        return ok(validatedOrder);
+      });
     };
 
   // Priceに数量を掛け合わせられるヘルパー関数
@@ -383,7 +394,7 @@ export const PlaceOrderWorkflow = () => {
       amountToBill,
     };
 
-    return { type: "ok", value: pricedOrder };
+    return ok(pricedOrder);
   };
 
   // 確認ステップの実装
@@ -479,57 +490,65 @@ export const PlaceOrderWorkflow = () => {
       return [...event1, ...event2, ...event3];
     };
 
-  const serviceExceptionAdapter = <T, X>(
+  const serviceExceptionAdapter = <T, E, X>(
     serviceInfo: ServiceInfo,
-    fService: (x: X) => T
-  ): ((x: X) => Result<T, RemoteServerError>) => {
-    return (x: X): Result<T, RemoteServerError> => {
-      try {
-        const result = fService(x);
-        return { type: "ok", value: result };
-      } catch (exception) {
-        switch ((exception as ServiceException).type) {
-          case "timeoutException":
-            const timeoutError = {
-              service: serviceInfo,
-              exception: (exception as TimeoutException).value,
-            };
-            return { type: "error", error: timeoutError };
-          case "authorizationException":
-            const authError = {
-              service: serviceInfo,
-              exception: (exception as AuthorizationException).value,
-            };
-            return { type: "error", error: authError };
-          default:
-            throw { type: "error", error: exception };
-        }
-      }
+    fService: (x: X) => ResultAsync<T, E>
+  ): ((x: X) => ResultAsync<T, RemoteServerError>) => {
+    return (x: X) => {
+      const result = fService(x);
+      const mappedResult = result.mapErr((error) => {
+        const remoteServerError: RemoteServerError = {
+          service: serviceInfo,
+          exception: `${error}`,
+        };
+        return remoteServerError;
+      });
+      return mappedResult;
     };
   };
 
-  const checkAddressExists: CheckAddressExists = async (
+  // bind: Result<T>と(T) => Result<U>を使って、Result<U>を手にいれる
+
+  const checkAddressExists: CheckAddressExists = (
     unvalidatedAddress: UnvalidatedAddress
   ) => {
-    const res = await fetch("https://example.com/address-service/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(unvalidatedAddress),
+    // Result<Response>
+    const r1 = fromPromise(
+      fetch("https://example.com/address-service/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(unvalidatedAddress),
+      }),
+      () => Error("Address Validation Error")
+    );
+
+    // Result<Response> to Result<Address>
+    const r2 = r1.andThen((r1) => {
+      const r2 = fromPromise(r1.json() as Promise<Address>, () =>
+        Error("FooError")
+      );
+
+      return r2;
     });
 
-    const address = await res.json();
+    // Result<Address> to Result<CheckedAddress>
+    const r3 = r2.map((address) => {
+      const x: CheckedAddress = {
+        type: "checkedAddress",
+        address,
+      };
 
-    const checkedAddress: CheckedAddress = {
-      type: "checkedAddress",
-      address,
-    };
+      return x;
+    });
 
-    return checkedAddress;
+    return r3;
   };
 
-  const checkAddressExistsR = (unvalidatedAddress: UnvalidatedAddress) => {
+  const checkAddressExistsR = (
+    unvalidatedAddress: UnvalidatedAddress
+  ): ResultAsync<CheckedAddress, RemoteServerError> => {
     const serviceInfo: ServiceInfo = {
       name: "AddressService",
       endpoint: "https://example.com/address-service/",
@@ -540,13 +559,7 @@ export const PlaceOrderWorkflow = () => {
       checkAddressExists
     );
 
-    return mapError(
-      (adaptedService: RemoteServerError) => ({
-        type: "remoteServiceError" as const,
-        error: adaptedService,
-      }),
-      adaptedService(unvalidatedAddress)
-    );
+    return adaptedService(unvalidatedAddress);
   };
 
   // ====================
@@ -558,7 +571,7 @@ export const PlaceOrderWorkflow = () => {
     (getProductPrice: GetProductPrice) =>
     (createOrderAcknowledgmentLetter: CreateOrderAcknowledgmentLetter) =>
     (sendOrderAcknowledgment: SendOrderAcknowledgment): PlaceOrderWorkflow => {
-      return async (placeOrderCommand: PlaceOrderCommand) => {
+      return (placeOrderCommand: PlaceOrderCommand) => {
         // DI
         const fValidateOrder = validateOrder(checkProductCodeExists);
         const fPricedOrder = priceOrder(getProductPrice);
@@ -567,53 +580,49 @@ export const PlaceOrderWorkflow = () => {
         )(sendOrderAcknowledgment);
         const fCreateEvents = createEvents;
 
-        const validateOrderAdapted = async (
-          unvalidatedOrder: UnvalidatedOrder
-        ) => {
-          return mapError(
-            (fValidateOrder: ValidationError) => ({
-              type: "validation" as const,
-              error: fValidateOrder,
-            }),
-            await fValidateOrder(unvalidatedOrder)
-          );
+        const validateOrderAdapted = (unvalidatedOrder: UnvalidatedOrder) => {
+          // 引数を受け取って、実行結果のErrorを別のエラーに変換した関数を得たい
+          const fResult = fValidateOrder(unvalidatedOrder);
+          const result = fResult.mapErr((error) => {
+            const placeOrderError: PlaceOrderError = {
+              type: "validation",
+              error: error,
+            };
+
+            return placeOrderError;
+          });
+
+          return result;
         };
-        const priceOrderAdapted = (aValidatedOrder: ValidatedOrder) => {
-          return mapError(
-            (fPricedOrder: PricingError) => ({
-              type: "pricing" as const,
-              error: fPricedOrder,
-            }),
-            fPricedOrder(aValidatedOrder)
-          );
+        const priceOrderAdapted = (
+          aValidatedOrder: ValidatedOrder
+        ): Result<PricedOrder, PlaceOrderError> => {
+          const result = fPricedOrder(aValidatedOrder).mapErr((error) => {
+            const placeOrderError: PlaceOrderError = {
+              type: "pricing",
+              error: error,
+            };
+
+            return placeOrderError;
+          });
+
+          return result;
         };
 
         // exec
-        const workflow = R.pipe(
-          placeOrderCommand.data,
-          (data) => validateOrderAdapted(data),
-          async (aValidatedOrder) =>
-            bind(await aValidatedOrder, priceOrderAdapted),
-          async (aPricedOrder) => {
-            const acknowledgementOption = map(
-              await aPricedOrder,
-              fAcknowledgmentOption
-            );
-            return { acknowledgementOption, aPricedOrder };
-          },
-          async ({ acknowledgementOption, aPricedOrder }) => {
-            if ((await acknowledgementOption).type === "error") {
-              return { type: "error", error: acknowledgementOption };
-            }
-            const event = map(
-              await acknowledgementOption,
-              fCreateEvents(aPricedOrder.value)
-            );
-            return event;
-          }
-        );
+        const aValidatedOrder = validateOrderAdapted(placeOrderCommand.data);
+        const aPricedOrder = aValidatedOrder.andThen(priceOrderAdapted);
+        const acknowledgedOption = aPricedOrder.map(fAcknowledgmentOption);
+        return safeTry(async function* () {
+          const aPricedOrderResult = yield* (await aPricedOrder).safeUnwrap();
+          const acknowledgedOptionResult = yield* (
+            await acknowledgedOption
+          ).safeUnwrap();
 
-        return await workflow(placeOrderCommand.data);
+          return ok(
+            fCreateEvents(aPricedOrderResult)(acknowledgedOptionResult)
+          );
+        });
       };
     };
 
@@ -621,39 +630,40 @@ export const PlaceOrderWorkflow = () => {
    * Using bind and map in the pipeline
    */
 
-  const mapError = <T, E, F>(
-    f: (error: E) => F,
-    aResult: Result<T, E>
-  ): Result<T, F> => {
-    switch (aResult.type) {
-      case "ok":
-        return { type: "ok", value: aResult.value };
-      case "error":
-        return { type: "error", error: f(aResult.error) };
-    }
-  };
+  // Result<Foo, Error> to Result<Foo, ValidationError>
+  // const mapError = <T, E, F>(
+  //   f: (error: E) => F,
+  //   aResult: Result<T, E>
+  // ): Result<T, F> => {
+  //   switch (aResult.type) {
+  //     case "ok":
+  //       return { type: "ok", value: aResult.value };
+  //     case "error":
+  //       return { type: "error", error: f(aResult.error) };
+  //   }
+  // };
 
-  const bind = <T, E1, E2, U>(
-    result: Result<T, E1>,
-    f: (value: T) => Result<U, E2>
-  ): Result<U, E1 | E2> => {
-    switch (result.type) {
-      case "ok":
-        return f(result.value);
-      case "error":
-        return result;
-    }
-  };
+  // const bind = <T, E1, E2, U>(
+  //   result: Result<T, E1>,
+  //   f: (value: T) => Result<U, E2>
+  // ): Result<U, E1 | E2> => {
+  //   switch (result.type) {
+  //     case "ok":
+  //       return f(result.value);
+  //     case "error":
+  //       return result;
+  //   }
+  // };
 
-  const map = <T, E, U>(
-    result: Result<T, E>,
-    f: (value: T) => U
-  ): Result<U, E> => {
-    switch (result.type) {
-      case "ok":
-        return { type: "ok", value: f(result.value) };
-      case "error":
-        return result;
-    }
-  };
+  // const map = <T, E, U>(
+  //   result: Result<T, E>,
+  //   f: (value: T) => U
+  // ): Result<U, E> => {
+  //   switch (result.type) {
+  //     case "ok":
+  //       return { type: "ok", value: f(result.value) };
+  //     case "error":
+  //       return result;
+  //   }
+  // };
 };
