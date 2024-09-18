@@ -1,4 +1,4 @@
-import * as R from "remeda";
+import { fromPromise, ok, Result, ResultAsync, safeTry } from "neverthrow";
 
 /** 9.8
  * Assembled pipelines
@@ -6,7 +6,6 @@ import * as R from "remeda";
 
 import {
   Address,
-  BillingAddress,
   CustomerInfo,
   EmailAddress,
   FirstName,
@@ -19,7 +18,6 @@ import {
   Price,
   ProductCode,
   SendOrderAcknowledgment,
-  ShippingAddress,
   UnvalidatedAddress,
   UnvalidatedAmountToBill,
   UnvalidatedBillingAddress,
@@ -39,9 +37,6 @@ export const PlaceOrderWorkflow = () => {
   type CheckProductCodeExists = (productCode: ProductCode) => boolean;
   type CheckedAddress = { type: "checkedAddress"; address: Address };
 
-  type Result<T, E> = { type: "ok"; value: T } | { type: "error"; error: E };
-  type AsyncResult<S, F> = Promise<Result<S, F>>;
-
   type Uri = string;
   type ServiceInfo = {
     name: string;
@@ -54,7 +49,7 @@ export const PlaceOrderWorkflow = () => {
   };
   type CheckAddressExists = (
     unvalidatedAddress: UnvalidatedAddress
-  ) => Promise<CheckedAddress>;
+  ) => ResultAsync<CheckedAddress, Error>;
 
   type UnvalidatedOrder = {
     orderId: string;
@@ -78,7 +73,7 @@ export const PlaceOrderWorkflow = () => {
     checkProductCodeExists: CheckProductCodeExists // 依存関係
   ) => (
     unvalidatedOrder: UnvalidatedOrder // 入力
-  ) => AsyncResult<ValidatedOrder, ValidationError>; // 出力
+  ) => ResultAsync<ValidatedOrder, ValidationError>; // 出力
 
   // ----- 注文の価格決定 -----
 
@@ -108,7 +103,7 @@ export const PlaceOrderWorkflow = () => {
   type PlaceOrderCommand = Command<UnvalidatedOrder>;
   type PlaceOrderWorkflow = (
     placeOrderCommand: PlaceOrderCommand // 入力コマンド
-  ) => AsyncResult<PlaceOrderEvent[], PlaceOrderError>; // 出力イベント
+  ) => ResultAsync<PlaceOrderEvent[], PlaceOrderError>; // 出力イベント
 
   type ValidatedCustomerInfo = CustomerInfo;
   type ValidatedShippingAddress = Address;
@@ -166,13 +161,6 @@ export const PlaceOrderWorkflow = () => {
   ) => (
     orderAcknowledgmentSent?: OrderAcknowledgmentSent // 入力(前のステップのイベント)
   ) => PlaceOrderEvent[]; // 出力
-
-  type TimeoutException = { type: "timeoutException"; value: string };
-  type AuthorizationException = {
-    type: "authorizationException";
-    value: string;
-  };
-  type ServiceException = TimeoutException | AuthorizationException;
 
   // ====================
   // パート2: 実装
