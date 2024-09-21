@@ -189,10 +189,8 @@ export const PlaceOrderWorkflow = () => {
     return customerInfo;
   };
 
-  const checkedAddress = checkAddressExistsR(unvalidatedAddress);
-
   const toAddress = (
-    checkedAddress: CheckedAddress
+    unvalidatedAddress: UnvalidatedAddress
   ): ResultAsync<Address, ValidationError> => {
     // まじ大事な思考手順
     // ResultAsync<T, E> to ResultAsync<A, E>
@@ -200,6 +198,8 @@ export const PlaceOrderWorkflow = () => {
     // 失敗する可能性がない→mapを使う
     // mapはResult<T, E>をResult<U, E>に変換する
     // mapErrはResult<T, E>をResult<T, F>に変換する
+
+    const checkedAddress = checkAddressExistsR(unvalidatedAddress);
 
     const result = checkedAddress.map((checkedAddress) => {
       const mappedAddress: Address = {
@@ -215,17 +215,17 @@ export const PlaceOrderWorkflow = () => {
 
     // 本来はここでreturnで良いが、DomainModelingのリポジトリのサンプルコードをみるとtoAddressの引数にはcheckedAddressを渡している
     // そのため、本来返すべきValidationErrorに無理やり変換している
-    return result;
+    // return result;
 
-    // const lierResult = result.mapErr((error) => {
-    //   const validationError: ValidationError = {
-    //     type: "error",
-    //     error: `${error}`,
-    //   };
-    //   return validationError;
-    // });
+    const lierResult = result.mapErr((error) => {
+      const validationError: ValidationError = {
+        type: "error",
+        error: `${error}`,
+      };
+      return validationError;
+    });
 
-    // return lierResult;
+    return lierResult;
   };
 
   const predicateToPassthru =
