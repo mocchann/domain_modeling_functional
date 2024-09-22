@@ -1,4 +1,11 @@
-import { fromPromise, ok, Result, ResultAsync, safeTry } from "neverthrow";
+import {
+  fromPromise,
+  ok,
+  okAsync,
+  Result,
+  ResultAsync,
+  safeTry,
+} from "neverthrow";
 
 /** 9.8
  * Assembled pipelines
@@ -190,42 +197,18 @@ export const PlaceOrderWorkflow = () => {
   };
 
   const toAddress = (
-    unvalidatedAddress: UnvalidatedAddress
+    checkedAddress: CheckedAddress
   ): ResultAsync<Address, ValidationError> => {
-    // まじ大事な思考手順
-    // ResultAsync<T, E> to ResultAsync<A, E>
-    // 失敗する可能性がある→andThen(bind)を使う
-    // 失敗する可能性がない→mapを使う
-    // mapはResult<T, E>をResult<U, E>に変換する
-    // mapErrはResult<T, E>をResult<T, F>に変換する
+    const result: Address = {
+      addressLine1: checkedAddress.address.addressLine1,
+      addressLine2: checkedAddress.address.addressLine2,
+      addressLine3: checkedAddress.address.addressLine3,
+      addressLine4: checkedAddress.address.addressLine4,
+      city: checkedAddress.address.city,
+      zipCode: checkedAddress.address.zipCode,
+    };
 
-    const checkedAddress = checkAddressExistsR(unvalidatedAddress);
-
-    const result = checkedAddress.map((checkedAddress) => {
-      const mappedAddress: Address = {
-        addressLine1: checkedAddress.address.addressLine1,
-        addressLine2: checkedAddress.address.addressLine2,
-        addressLine3: checkedAddress.address.addressLine3,
-        addressLine4: checkedAddress.address.addressLine4,
-        city: checkedAddress.address.city,
-        zipCode: checkedAddress.address.zipCode,
-      };
-      return mappedAddress;
-    });
-
-    // 本来はここでreturnで良いが、DomainModelingのリポジトリのサンプルコードをみるとtoAddressの引数にはcheckedAddressを渡している
-    // そのため、本来返すべきValidationErrorに無理やり変換している
-    // return result;
-
-    const lierResult = result.mapErr((error) => {
-      const validationError: ValidationError = {
-        type: "error",
-        error: `${error}`,
-      };
-      return validationError;
-    });
-
-    return lierResult;
+    return okAsync(result);
   };
 
   const predicateToPassthru =
@@ -322,14 +305,22 @@ export const PlaceOrderWorkflow = () => {
           unvalidatedOrder.customerInfo
         );
 
+        const checkedShippingAddress = yield* toCheckedAddress(
+          checkAddressExistsR
+        )(unvalidatedOrder.shippingAddress).safeUnwrap();
+
         // ResultAsync<T, E>のTだけを得たいため、yield* safeUnwrap()を使って取得する
         const shippingAddress = yield* toAddress(
-          unvalidatedOrder.shippingAddress
+          checkedShippingAddress
         ).safeUnwrap();
+
+        const checkedBillingAddress = yield* toCheckedAddress(
+          checkAddressExistsR
+        )(unvalidatedOrder.billingAddress).safeUnwrap();
 
         // ResultAsync<T, E>のTだけを得たいため、yield* safeUnwrap()を使って取得する
         const billingAddress = yield* toAddress(
-          unvalidatedOrder.billingAddress
+          checkedBillingAddress
         ).safeUnwrap();
 
         const orderLines = unvalidatedOrder.orderLines.map(
@@ -561,6 +552,23 @@ export const PlaceOrderWorkflow = () => {
 
     return adaptedService(unvalidatedAddress);
   };
+
+  const toCheckedAddress =
+    (
+      checkAddressExistsR: (
+        unvalidatedAddress: UnvalidatedAddress
+      ) => ResultAsync<CheckedAddress, RemoteServerError>
+    ) =>
+    (unvalidatedAddress: UnvalidatedAddress) => {
+      const result = checkAddressExistsR(unvalidatedAddress);
+      return result.mapErr((error) => {
+        const validationError: ValidationError = {
+          type: "error",
+          error: `${error}`,
+        };
+        return validationError;
+      });
+    };
 
   // ====================
   // ワークフローの全体像
